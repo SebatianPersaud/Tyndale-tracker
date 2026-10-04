@@ -1,0 +1,838 @@
+<title>Tyndale Degree Tracker</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Hanken+Grotesk:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&family=Spectral:wght@500;600&display=swap">
+<style>
+/* Layout: one 960px column; sticky app bar with tabs; requirement blocks read like a program sheet, rows as checklist lines */
+:root{
+  --bg:#f3f5f8; --surface:#ffffff; --surface-2:#eef1f6; --line:#dde2ea; --line-2:#c9d0db;
+  --fg:#141821; --muted:#5a6372; --faint:#8a93a2;
+  --accent:#24448f; --accent-ink:#ffffff; --accent-soft:#e3e9f7;
+  --done:#1f7a4f; --done-soft:#dff2e8; --prog:#a3620b; --prog-soft:#fbefd9; --plan:#4a55b8; --plan-soft:#e7e9fb;
+  --hol:#b03a48; --hol-soft:#f8e3e6; --exam:#7a4bb3; --exam-soft:#efe6f9;
+  --shadow:0 1px 2px rgba(20,24,33,.06),0 4px 16px rgba(20,24,33,.05);
+  --f-display:"Spectral",Georgia,"Times New Roman",serif;
+  --f-ui:"Hanken Grotesk",ui-sans-serif,system-ui,-apple-system,"Segoe UI",sans-serif;
+  --f-mono:"JetBrains Mono",ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;
+  --r:10px;
+}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){
+  --bg:#0e1116; --surface:#151a21; --surface-2:#1b212a; --line:#252c37; --line-2:#323b48;
+  --fg:#e7eaf0; --muted:#9aa3b1; --faint:#6d7685;
+  --accent:#8fb0ff; --accent-ink:#0e1116; --accent-soft:#1d2840;
+  --done:#56c98e; --done-soft:#14291f; --prog:#e6a64a; --prog-soft:#2b2214; --plan:#a3abff; --plan-soft:#1f2240;
+  --hol:#f07f8c; --hol-soft:#2d1a1e; --exam:#c39af0; --exam-soft:#251c33;
+  --shadow:0 1px 2px rgba(0,0,0,.4),0 6px 20px rgba(0,0,0,.25); color-scheme:dark}}
+:root[data-theme="dark"]{
+  --bg:#0e1116; --surface:#151a21; --surface-2:#1b212a; --line:#252c37; --line-2:#323b48;
+  --fg:#e7eaf0; --muted:#9aa3b1; --faint:#6d7685;
+  --accent:#8fb0ff; --accent-ink:#0e1116; --accent-soft:#1d2840;
+  --done:#56c98e; --done-soft:#14291f; --prog:#e6a64a; --prog-soft:#2b2214; --plan:#a3abff; --plan-soft:#1f2240;
+  --hol:#f07f8c; --hol-soft:#2d1a1e; --exam:#c39af0; --exam-soft:#251c33;
+  --shadow:0 1px 2px rgba(0,0,0,.4),0 6px 20px rgba(0,0,0,.25); color-scheme:dark}
+*{box-sizing:border-box}
+body{background:var(--bg);color:var(--fg);font-family:var(--f-ui);font-size:15px;line-height:1.5;-webkit-font-smoothing:antialiased}
+button,input,select{font:inherit;color:inherit}
+button{cursor:pointer}
+:focus-visible{outline:2px solid var(--accent);outline-offset:2px;border-radius:6px}
+.wrap{max-width:960px;margin:0 auto;padding-inline:16px;padding-block:0 64px}
+.mono{font-family:var(--f-mono);font-size:.86em;letter-spacing:-.01em}
+.muted{color:var(--muted)} .faint{color:var(--faint)}
+h1,h2,h3{text-wrap:balance;margin:0}
+.eyebrow{font-size:11.5px;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);font-weight:600}
+
+/* app bar */
+.bar{position:sticky;top:env(safe-area-inset-top,0px);z-index:20;background:color-mix(in srgb,var(--bg) 88%,transparent);backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px);border-bottom:1px solid var(--line)}
+.bar-in{max-width:960px;margin:0 auto;padding:10px 16px;display:flex;align-items:center;gap:12px;flex-wrap:wrap}
+.brand{display:flex;align-items:baseline;gap:8px;margin-right:auto;min-width:0}
+.brand b{font-family:var(--f-display);font-size:19px;font-weight:600;letter-spacing:-.01em}
+.brand span{font-size:12.5px;color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.tabs{display:flex;background:var(--surface-2);border:1px solid var(--line);border-radius:999px;padding:3px;gap:2px}
+.tab{border:0;background:transparent;padding:6px 14px;border-radius:999px;font-weight:600;font-size:13.5px;color:var(--muted)}
+.tab[aria-selected="true"]{background:var(--surface);color:var(--fg);box-shadow:var(--shadow)}
+.sync{display:flex;align-items:center;gap:6px;font-size:12.5px;color:var(--muted);white-space:nowrap}
+.sync i{width:7px;height:7px;border-radius:50%;background:var(--faint);display:inline-block}
+.sync[data-s="saved"] i{background:var(--done)} .sync[data-s="saving"] i{background:var(--prog)} .sync[data-s="local"] i{background:var(--hol)}
+.iconbtn{border:1px solid var(--line);background:var(--surface);border-radius:8px;padding:6px 10px;font-size:13px;font-weight:600}
+.iconbtn:hover{border-color:var(--line-2)}
+
+.notice{margin-top:16px;padding:10px 14px;border-radius:var(--r);background:var(--prog-soft);color:var(--fg);font-size:13.5px;border:1px solid color-mix(in srgb,var(--prog) 30%,transparent)}
+
+/* summary */
+.summary{margin-top:22px;display:grid;grid-template-columns:minmax(0,1fr) auto;gap:18px 28px;align-items:end}
+.summary h1{font-family:var(--f-display);font-weight:600;font-size:clamp(26px,4.4vw,36px);line-height:1.1;letter-spacing:-.015em}
+.summary .sub{margin-top:6px;color:var(--muted);font-size:14px;display:flex;flex-wrap:wrap;gap:4px 14px}
+.bignum{text-align:right;font-variant-numeric:tabular-nums}
+.bignum b{font-family:var(--f-display);font-size:44px;font-weight:600;line-height:1}
+.bignum span{color:var(--muted);font-size:14px}
+.meter{grid-column:1/-1;display:flex;flex-direction:column;gap:8px}
+.track{height:10px;border-radius:99px;background:var(--surface-2);border:1px solid var(--line);overflow:hidden;display:flex}
+.track>div{height:100%}
+.legend{display:flex;flex-wrap:wrap;gap:6px 18px;font-size:13px;color:var(--muted);font-variant-numeric:tabular-nums}
+.legend b{color:var(--fg);font-weight:600}
+.sw{display:inline-block;width:9px;height:9px;border-radius:2px;margin-right:6px;vertical-align:0}
+.stats{grid-column:1/-1;display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px}
+.stat{background:var(--surface);border:1px solid var(--line);border-radius:var(--r);padding:10px 14px}
+.stat .k{font-size:12px;color:var(--muted)}
+.stat .v{font-weight:700;font-size:17px;font-variant-numeric:tabular-nums}
+.stat .v small{font-weight:500;color:var(--muted);font-size:13px}
+@media (max-width:560px){.summary{grid-template-columns:1fr}.bignum{text-align:left}.stats{grid-template-columns:1fr 1fr}.stats .stat:last-child{grid-column:1/-1}}
+
+/* sections */
+.section-h{margin-top:34px;display:flex;align-items:baseline;gap:10px;flex-wrap:wrap;padding-bottom:8px;border-bottom:2px solid var(--fg)}
+.section-h h2{font-family:var(--f-display);font-weight:600;font-size:22px}
+.section-h a{margin-left:auto;font-size:13px;color:var(--accent);text-decoration:none;font-weight:600}
+.section-h a:hover{text-decoration:underline}
+.block{margin-top:18px;background:var(--surface);border:1px solid var(--line);border-radius:var(--r);overflow:hidden}
+.block-h{display:flex;align-items:center;gap:12px;padding:12px 16px;border-bottom:1px solid var(--line);background:var(--surface-2)}
+.block-h h3{font-size:15px;font-weight:700}
+.block-h .cr{margin-left:auto;font-size:13px;color:var(--muted);font-variant-numeric:tabular-nums;white-space:nowrap}
+.mini{width:70px;height:6px;border-radius:9px;background:var(--line);overflow:hidden;flex:none}
+.mini>div{height:100%;background:var(--done)}
+.rows{display:flex;flex-direction:column}
+.row{padding:10px 16px;border-top:1px solid var(--line);display:flex;flex-direction:column;gap:8px}
+.row:first-child{border-top:0}
+.row-label{font-size:12.5px;color:var(--muted);font-weight:600;display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+.row-label .count{font-variant-numeric:tabular-nums;font-weight:500}
+
+.course{display:grid;grid-template-columns:auto minmax(0,1fr) auto;gap:12px;align-items:center}
+.course .ct{min-width:0}
+.course .code{font-family:var(--f-mono);font-size:13px;font-weight:500}
+.course .title{display:block;color:var(--muted);font-size:13.5px;line-height:1.35;overflow-wrap:anywhere}
+.course .crs{font-size:12.5px;color:var(--faint);font-variant-numeric:tabular-nums;display:flex;align-items:center;gap:6px}
+.x{border:0;background:transparent;color:var(--faint);font-size:18px;line-height:1;padding:2px 6px;border-radius:6px}
+.x:hover{color:var(--hol);background:var(--hol-soft)}
+
+.pill{border:1px solid var(--line-2);background:var(--surface);border-radius:999px;font-size:12px;font-weight:600;padding:4px 10px;min-width:96px;text-align:left;display:inline-flex;align-items:center;gap:6px;color:var(--muted);white-space:nowrap}
+.pill::before{content:"";width:8px;height:8px;border-radius:50%;border:1.5px solid currentColor;flex:none}
+.pill[data-s="p"]{background:var(--plan-soft);color:var(--plan);border-color:transparent}
+.pill[data-s="i"]{background:var(--prog-soft);color:var(--prog);border-color:transparent}
+.pill[data-s="i"]::before{background:linear-gradient(90deg,currentColor 50%,transparent 50%)}
+.pill[data-s="d"]{background:var(--done-soft);color:var(--done);border-color:transparent}
+.pill[data-s="d"]::before{background:currentColor}
+
+.chips{display:flex;flex-wrap:wrap;gap:6px}
+.chip{border:1px dashed var(--line-2);background:transparent;border-radius:7px;padding:4px 9px;font-family:var(--f-mono);font-size:12.5px;color:var(--fg);display:inline-flex;gap:6px;align-items:baseline;max-width:100%}
+.chip em{font-style:normal;font-family:var(--f-ui);color:var(--muted);font-size:12px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:220px}
+.chip:hover{border-style:solid;border-color:var(--accent);background:var(--accent-soft)}
+.linkbtn{border:0;background:transparent;color:var(--accent);font-weight:600;font-size:12.5px;padding:0}
+.slot{display:flex;gap:8px;align-items:center}
+.slot input{flex:1;min-width:0;border:1px dashed var(--line-2);background:transparent;border-radius:8px;padding:7px 10px;font-size:13.5px}
+.slot input:focus{border-style:solid;border-color:var(--accent);outline:none}
+.freebar{display:flex;align-items:center;gap:12px;font-size:13.5px;color:var(--muted)}
+.freelist{display:flex;flex-wrap:wrap;gap:6px}
+.tag{font-family:var(--f-mono);font-size:12px;padding:2px 8px;border-radius:6px;background:var(--surface-2);border:1px solid var(--line)}
+.notes{margin-top:14px;font-size:13px;color:var(--muted);display:flex;flex-direction:column;gap:4px;padding-left:18px}
+
+/* catalog */
+.toolbar{margin-top:22px;display:flex;gap:10px;flex-wrap:wrap}
+.field{border:1px solid var(--line);background:var(--surface);border-radius:8px;padding:8px 12px;font-size:14px;min-width:0}
+.field:focus{outline:none;border-color:var(--accent)}
+.toolbar .field.grow{flex:1 1 240px}
+.cat{margin-top:14px;background:var(--surface);border:1px solid var(--line);border-radius:var(--r)}
+.cat .course{padding:10px 16px;border-top:1px solid var(--line)}
+.cat .course:first-child{border-top:0}
+.regc{font-family:var(--f-mono);font-size:11.5px;color:var(--faint)}
+.empty{padding:28px 16px;text-align:center;color:var(--muted)}
+
+/* calendar */
+.cal-top{margin-top:22px;display:grid;grid-template-columns:minmax(0,1.3fr) minmax(0,1fr);gap:14px}
+@media (max-width:720px){.cal-top{grid-template-columns:1fr}}
+.next{background:var(--accent);color:var(--accent-ink);border-radius:var(--r);padding:16px 18px;display:flex;flex-direction:column;gap:6px}
+.next .eyebrow{color:inherit;opacity:.8}
+.next .what{font-family:var(--f-display);font-size:22px;font-weight:600;line-height:1.2}
+.next .when{font-size:13.5px;opacity:.85}
+.count-down{font-family:var(--f-mono);font-size:26px;font-weight:500;font-variant-numeric:tabular-nums;letter-spacing:-.02em}
+.termcard{background:var(--surface);border:1px solid var(--line);border-radius:var(--r);padding:14px 16px;display:flex;flex-direction:column;gap:8px}
+.month{margin-top:18px;background:var(--surface);border:1px solid var(--line);border-radius:var(--r);overflow:hidden}
+.month-h{display:flex;align-items:center;gap:8px;padding:10px 12px;border-bottom:1px solid var(--line)}
+.month-h h3{font-family:var(--f-display);font-size:20px;font-weight:600;margin-right:auto;padding-left:4px}
+.grid7{display:grid;grid-template-columns:repeat(7,minmax(0,1fr))}
+.dow{font-size:11px;letter-spacing:.06em;text-transform:uppercase;color:var(--muted);padding:6px 8px;border-bottom:1px solid var(--line);font-weight:600}
+.day{min-height:92px;border-right:1px solid var(--line);border-bottom:1px solid var(--line);padding:5px 6px;display:flex;flex-direction:column;gap:3px;background:transparent;border-top:0;border-left:0;text-align:left;min-width:0}
+.day:nth-child(7n){border-right:0}
+.day.out{background:var(--surface-2)} .day.out .dn{color:var(--faint)}
+.day .dn{font-size:12.5px;font-weight:600;font-variant-numeric:tabular-nums}
+.day.today .dn{background:var(--accent);color:var(--accent-ink);border-radius:999px;padding:0 7px;align-self:flex-start}
+.day.sel{box-shadow:inset 0 0 0 2px var(--accent)}
+.ev{font-size:11px;line-height:1.25;padding:1px 5px;border-radius:4px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;background:var(--surface-2);color:var(--fg)}
+.ev.holiday{background:var(--hol-soft);color:var(--hol)} .ev.exam{background:var(--exam-soft);color:var(--exam)}
+.ev.deadline{background:var(--prog-soft);color:var(--prog)} .ev.term{background:var(--accent-soft);color:var(--accent)}
+.ev.cls{background:var(--plan-soft);color:var(--plan)} .ev.mine{background:var(--done-soft);color:var(--done)}
+.more{font-size:11px;color:var(--muted)}
+@media (max-width:600px){.day{min-height:54px}.ev{font-size:0;height:5px;padding:0;border-radius:3px}.dow{padding:6px 4px;font-size:10px}}
+.daypanel{margin-top:14px;background:var(--surface);border:1px solid var(--line);border-radius:var(--r);padding:14px 16px}
+.daypanel h3{font-size:15px;margin-bottom:8px}
+.ag{display:flex;flex-direction:column}
+.ag-i{display:grid;grid-template-columns:96px minmax(0,1fr) auto;gap:10px;padding:8px 0;border-top:1px solid var(--line);align-items:baseline;font-size:14px}
+.ag-i:first-child{border-top:0}
+.ag-i .t{font-variant-numeric:tabular-nums;color:var(--muted);font-size:13px}
+.two{margin-top:18px;display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:14px}
+@media (max-width:720px){.two{grid-template-columns:1fr}}
+.panel{background:var(--surface);border:1px solid var(--line);border-radius:var(--r);padding:14px 16px;display:flex;flex-direction:column;gap:10px;min-width:0}
+.panel h3{font-size:15px}
+.form{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.form .full{grid-column:1/-1}
+.form label{display:flex;flex-direction:column;gap:4px;font-size:12px;color:var(--muted);font-weight:600;min-width:0}
+.days{display:flex;gap:4px;flex-wrap:wrap}
+.days label{flex-direction:row;align-items:center;gap:0}
+.days input{position:absolute;opacity:0;pointer-events:none}
+.days span{border:1px solid var(--line-2);border-radius:7px;padding:5px 9px;font-size:12.5px;color:var(--fg);font-weight:600;cursor:pointer}
+.days input:checked+span{background:var(--accent);color:var(--accent-ink);border-color:var(--accent)}
+.days input:focus-visible+span{outline:2px solid var(--accent);outline-offset:2px}
+.btn{border:0;background:var(--accent);color:var(--accent-ink);font-weight:700;border-radius:8px;padding:9px 14px;font-size:14px}
+.btn.ghost{background:transparent;color:var(--fg);border:1px solid var(--line-2)}
+.btn.danger{background:var(--hol);color:#fff}
+.err{color:var(--hol);font-size:12.5px}
+.li{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:8px;align-items:center;padding:8px 0;border-top:1px solid var(--line);font-size:14px}
+.li:first-of-type{border-top:0}
+.li small{display:block;color:var(--muted);font-size:12.5px}
+
+/* modal */
+.scrim{position:fixed;inset:0;background:rgba(10,12,16,.55);display:flex;align-items:flex-start;justify-content:center;padding:max(5vh,16px) 16px;z-index:50;overflow:auto}
+.modal{background:var(--surface);border:1px solid var(--line);border-radius:14px;max-width:520px;width:100%;padding:22px;box-shadow:var(--shadow);display:flex;flex-direction:column;gap:14px}
+.modal h2{font-family:var(--f-display);font-size:26px;font-weight:600;line-height:1.15}
+.modal p{margin:0;color:var(--muted);font-size:14px}
+.modal label{display:flex;flex-direction:column;gap:5px;font-size:12.5px;font-weight:600;color:var(--muted)}
+.modal .field{width:100%}
+.acct{display:flex;gap:10px;align-items:flex-start;background:var(--surface-2);border-radius:10px;padding:10px 12px;font-size:13px;color:var(--muted)}
+.acct b{color:var(--fg)}
+.actions{display:flex;gap:8px;justify-content:flex-end;flex-wrap:wrap}
+footer{margin-top:40px;font-size:12.5px;color:var(--faint);line-height:1.6}
+footer a{color:var(--muted)}
+.skel{margin-top:40px;color:var(--muted)}
+@media (prefers-reduced-motion:no-preference){.track>div,.mini>div{transition:width .35s ease}}
+</style>
+
+<header class="bar">
+  <div class="bar-in">
+    <div class="brand"><b>Degree Tracker</b><span id="who">Tyndale University · 2026–27</span></div>
+    <nav class="tabs" role="tablist" aria-label="Pages">
+      <button class="tab" role="tab" id="tab-degree" data-tab="degree" aria-selected="true">Degree</button>
+      <button class="tab" role="tab" id="tab-cal" data-tab="cal" aria-selected="false">Calendar</button>
+      <button class="tab" role="tab" id="tab-courses" data-tab="courses" aria-selected="false">Courses</button>
+    </nav>
+    <span class="sync" id="sync" data-s="loading"><i></i><span>Connecting…</span></span>
+    <button class="iconbtn" id="settingsBtn" data-act="settings">Settings</button>
+  </div>
+</header>
+<main class="wrap" id="app"><p class="skel">Loading your tracker…</p></main>
+<div id="modal"></div>
+
+<script>
+const CATALOG = [["ARTM 100","Art Appreciation: An Introduction to Visual Language"],["ARTM 113","Introduction to Cinematography"],["ARTM 130","Introduction to Design"],["ARTM 160","Introduction to Drawing"],["ARTM 161","Introduction to Painting"],["ARTM 164","Visual Art: Introduction to Studio Practice"],["ARTM 201","History of Art I"],["ARTM 202","History of Art II"],["ARTM 220","Introduction to Photography"],["ARTM 241","Introduction to Theatre I"],["ARTM 242","Introduction to Theatre II"],["ARTM 260","Intermediate Drawing"],["ARTM 261","Intermediate Painting"],["ARTM 303","Aesthetics"],["ARTM 310","Digital Technology and Sound Engineering"],["ARTM 312","Internship in Digital Technology and Sound Engineering"],["ARTM 340","Cinema and Christianity"],["ARTM 344","Film and Western Culture"],["ARTM 350","Directed Studies in Visual Arts and Media"],["ARTM 380","Writing and North American Art"],["ARTM 390","Studio Practicum: Art in Context"],["ASLN 101","Introduction to American Sign Language I"],["ASLN 102","Introduction to American Sign Language II"],["ASLN 201","American Sign Language III"],["ASLN 202","American Sign Language IV"],["BIOL 101","Introduction to Biology"],["BIOL 102","Human Biology"],["BIOL 103","Introduction to Molecular and Cell Biology"],["BIOL 104","Introduction to Organismal and Evolutionary Biology"],["BIOL 201","Biology of Seedless Plants"],["BIOL 221","Principles of Ecology"],["BIOL 231","Genetics"],["BIOL 310","Brain and Behaviour"],["BSTH 101","Old Testament Scripture"],["BSTH 102","New Testament Scripture"],["BSTH 201","Hermeneutics"],["BSTH 211","Torah & the Ancient Near East"],["BSTH 231","Life and Teachings of Jesus"],["BSTH 267","Pentecostal History and Spirituality"],["BSTH 270","Introduction to Christian Theology"],["BSTH 280","Introduction to World Religions"],["BSTH 307","Israel Study Tour: Historical Geography of the Bible"],["BSTH 308","Archaeology of the Holy Land"],["BSTH 310","Pentateuch"],["BSTH 311","Former Prophets (Historical Books)"],["BSTH 312","Latter Prophets: Major"],["BSTH 313","Latter Prophets: Minor"],["BSTH 314","Psalms"],["BSTH 315","Writings: Wisdom"],["BSTH 316","Writings: The Five Scrolls"],["BSTH 317","Writings: Ezra-Nehemiah and Chronicles"],["BSTH 320","Ancient Near East"],["BSTH 321","Ten Commandments"],["BSTH 330","Matthew"],["BSTH 331","Mark"],["BSTH 332","Luke and Acts"],["BSTH 333","John"],["BSTH 334","Romans"],["BSTH 335","1 & 2 Corinthians"],["BSTH 338","Paul's Shorter Letters"],["BSTH 339","Hebrews and General Epistles"],["BSTH 342","Revelation"],["BSTH 345","Second Temple Judaism"],["BSTH 346","Jesus and the Synoptic Tradition"],["BSTH 347","Paul: Apostle and Theologian"],["BSTH 350","Directed Study in Biblical Studies and Theology"],["BSTH 360","The Spirituality of the Early Church"],["BSTH 362","Augustine of Hippo"],["BSTH 363","Medieval Theology and Spirituality"],["BSTH 364","Aquinas"],["BSTH 365","Reformation Theology"],["BSTH 367","Modern Theology"],["BSTH 368","The Evangelical Movement: From the Great Awakening to the Present"],["BSTH 369","Major Theologians"],["BSTH 370","Doctrine of Scripture"],["BSTH 371","Doctrine of God"],["BSTH 372","Doctrine of Creation"],["BSTH 373","Doctrine of the Human Person"],["BSTH 374","Doctrine of Christ"],["BSTH 376","Doctrine of the Holy Spirit"],["BSTH 377","Doctrine of Salvation"],["BSTH 378","Doctrine of the Church"],["BSTH 379","Doctrine of Eschatology"],["BSTH 382","Judaism"],["BSTH 383","Islam"],["BSTH 386","Pentecostal Theology"],["BSTH 387","Contemporary Religious Movements"],["BSTH 392","Christianity and Science"],["BSTH 394","Marriage in Theological Perspective"],["BSTH 396","Christian Ethics"],["BSTH 397","Disability and Theology"],["BSTH 410","Old Testament Theology"],["BSTH 430","New Testament Theology"],["BSTH 440","Topics in Biblical Theology"],["BSTH 450","Advanced Directed Study in Biblical Studies and Theology"],["BSTH 460","Topics in Historical Theology"],["BSTH 470","Topics in Christian Doctrine"],["BSTH 497","Honours Thesis in Biblical Studies and Theology I"],["BSTH 499","Honours Thesis in Biblical Studies and Theology II"],["BUSI 101","Introduction to Business"],["BUSI 102","Mathematics for Business"],["BUSI 201","Organizational Behaviour"],["BUSI 203","Business Communication"],["BUSI 211","Leadership"],["BUSI 215","Business Ethics"],["BUSI 231","Marketing"],["BUSI 261","Introduction to Financial Accounting"],["BUSI 262","Introduction to Managerial Accounting"],["BUSI 301","Human Resource Management"],["BUSI 311","Managing Non-Profit Organizations"],["BUSI 314","Data Analytics"],["BUSI 317","Financial Management & Evaluation in Nonprofit Organizations"],["BUSI 321","Canadian Business Law"],["BUSI 325","Business and the Environment"],["BUSI 328","Perspectives on Community Development"],["BUSI 332","Professional Selling"],["BUSI 334","Business Negotiations"],["BUSI 341","Entrepreneurship and New Ventures"],["BUSI 350","Directed Studies in Business Administration"],["BUSI 361","Intermediate Financial Accounting"],["BUSI 362","Intermediate Managerial Accounting"],["BUSI 371","Managing Information Systems"],["BUSI 372","Operations Management"],["BUSI 374","Computerized Accounting Systems"],["BUSI 381","Corporate Finance"],["BUSI 383","Personal Finance"],["BUSI 385","Internship"],["BUSI 391","International Business"],["BUSI 403","Authentic Leadership"],["BUSI 410","History of Management"],["BUSI 411","Strategy"],["BUSI 412","Business Policy and Strategy II"],["BUSI 415","Business and Society"],["BUSI 420","Capstone: Management Experience"],["BUSI 443","Internship"],["BUSI 450","Advanced Directed Studies in Business Administration"],["CDEV 301","Perspectives on Community Development"],["CDEV 302","Applications in Community Development"],["CHEM 101","General Chemistry I"],["CHEM 102","General Chemistry II"],["CHRI 101","Christian Life and Discipleship"],["CHRI 121","Foundations of Christian Ministry and Practical Theology"],["CHRI 131","Foundations of Ministry to Children and Youth"],["CHRI 203","Spiritual Formation"],["CHRI 211","Leadership"],["CHRI 221","Educational History and Philosophy"],["CHRI 231","The Practice of Youth Ministry"],["CHRI 239","Foundations of Family Ministry"],["CHRI 243","Introduction to Pastoral Counselling"],["CHRI 271","Behaviour in Groups"],["CHRI 274","Why Music Matters"],["CHRI 301","Contemporary Pentecostal Issues"],["CHRI 308","Internship in Pentecostal Ministry"],["CHRI 309","Internship in Student Development Leadership"],["CHRI 317","Financial Management & Evaluation in Nonprofit Organizations"],["CHRI 321","Principles and Practices of Teaching"],["CHRI 322","Nurturing the Spiritual Lives of Children"],["CHRI 329","Internship in Children's Ministry"],["CHRI 331","Canadian Youth Culture"],["CHRI 332","Youth at Risk"],["CHRI 339","Internship in Youth Ministry"],["CHRI 340","Contemporary Worship in the Church"],["CHRI 341","Evangelism"],["CHRI 343","Preaching"],["CHRI 344","Seminar in Ministry"],["CHRI 346","History of Christian Worship"],["CHRI 347","Theology of Christian Worship"],["CHRI 349","Internship in Pastoral Ministry"],["CHRI 350","Directed Studies in Christian Ministries"],["CHRI 361","Global Christianity"],["CHRI 362","Modern Missiological Issues"],["CHRI 364","Ministry in a Multicultural World"],["CHRI 366","Anthropology for Humanitarian Work"],["CHRI 367","Cross-Cultural Studies"],["CHRI 368","Seminar in Intercultural Studies"],["CHRI 369","Internship in Intercultural Studies"],["CHRI 370","Ministry in a Muslim Context"],["CHRI 372","Spiritual Growth and Development"],["CHRI 394","Directed Research Methods"],["CHRI 395","Directed Research Project"],["ECON 101","Microeconomics"],["ECON 102","Macroeconomics"],["ENGL 101","Introduction to Literature I"],["ENGL 102","Introduction to Literature II"],["ENGL 171","Literature and Composition"],["ENGL 172","Major Authors in English Literature"],["ENGL 260","Practical Criticism"],["ENGL 262","Foundations in Rhetoric"],["ENGL 263","Foundations in Writing"],["ENGL 290","The Short Story"],["ENGL 301","Anglo-Saxon Literature"],["ENGL 302","Arthurian Literature"],["ENGL 303","Sixteenth-Century Literature"],["ENGL 305","Classics of Medieval Literature"],["ENGL 306","The Bible as Literature"],["ENGL 307","Children's Literature"],["ENGL 308","Science Fiction and Subcreation"],["ENGL 310","Seventeenth-Century Literature"],["ENGL 312","Introduction to Old Norse Literature"],["ENGL 320","Irony's Edge: Eighteenth-Century Satire"],["ENGL 331","Romantic Poetry"],["ENGL 332","The Early Novel"],["ENGL 333","Victorian Poetry"],["ENGL 340","Twentieth-Century Literature"],["ENGL 350","Directed Studies in English"],["ENGL 361","Creative Writing"],["ENGL 363","Playwriting"],["ENGL 370","Chaucer"],["ENGL 371","George Herbert: Priest and Poet"],["ENGL 372","Jane Austen"],["ENGL 374","Studies in C.S. Lewis"],["ENGL 375","Shakespeare"],["ENGL 378","Milton"],["ENGL 380","Post-Colonial Literature"],["ENGL 382","African-American Literature"],["ENGL 383","American Literature I"],["ENGL 384","American Literature II"],["ENGL 387","Literature Across the Americas"],["ENGL 388","Canadian Literature and Culture"],["ENGL 400","History of Literary Theory"],["ENGL 401","Contemporary Literary Theory"],["ENGL 403","Indigenous Writers of North America"],["ENGL 411","Psalms as Poetry, Psalms in Poetry"],["ENGL 425","The Romantic Epic"],["ENGL 426","Shakespeare's History Plays"],["ENGL 440","English Internship"],["ENGL 450","Advanced Directed Studies in English"],["ENGL 497","Honours Thesis in English I"],["ENGL 499","Honours Thesis in English II"],["ENVS 151","Introduction to Environmental Science"],["FREN 101","Introductory French I"],["FREN 102","Introductory French II"],["FREN 201","Intermediate French I"],["FREN 202","Intermediate French II"],["FREN 210","Conversational French"],["FREN 230","Everyday French Grammar"],["FREN 241","Introduction to French Literature and Media"],["FREN 341","Francophone Literature"],["FREN 350","Directed Studies in French"],["FREN 370","Professional French"],["FREN 391","French Travel Practicum"],["GEOG 101","Introduction to Physical Geography: Earth Science"],["GEOG 102","Introduction to Physical Geography: Weather, Climate and Ecosystems"],["GREE 201","Elementary New Testament Greek I"],["GREE 202","Elementary New Testament Greek II"],["GREE 301","Readings in New Testament Greek I"],["GREE 302","Readings in New Testament Greek II"],["GREE 451","Advanced Studies in the New Testament Greek Text"],["HEAL 102","Human Biology"],["HEAL 301","Social Determinants of Health"],["HEAL 302","Mental Health & Social Policy"],["HEAL 310","Brain and Behaviour"],["HEAL 350","Directed Studies in Health and Human Services"],["HEAL 391","Applied Skills for Practice in Health and Human Services"],["HEAL 431","Advanced Studies in Trauma: From Origins to Interventions"],["HEAL 441","Advanced Studies in Women's Health"],["HEAL 450","Directed Studies in Health and Human Services"],["HEAL 493","Practicum in Psycho-Social Health and Health Determinants"],["HEBR 201","Introduction to Biblical Hebrew I"],["HEBR 202","Introduction to Biblical Hebrew II"],["HEBR 301","Readings in Biblical Hebrew I"],["HEBR 302","Readings in Biblical Hebrew II"],["HIST 101","History of Western Civilization in Global Perspective I"],["HIST 102","History of Western Civilization in Global Perspective II"],["HIST 151","History of World Christianity"],["HIST 201","History of Art I"],["HIST 202","History of Art II"],["HIST 240","Introduction to British History I"],["HIST 241","Introduction to British History II"],["HIST 242","England, Ireland and Cromwell in the Sixteenth and Seventeenth Centuries"],["HIST 251","History of World Christianity I"],["HIST 252","History of World Christianity II"],["HIST 263","Prosperity and Poverty: An Economic History of the World since 1700"],["HIST 271","Canada and the Western World 1500-1867"],["HIST 272","Canada and the World since 1867"],["HIST 281","America and the Western World 1500-1865"],["HIST 282","America and the World since 1865"],["HIST 285","Christianity and Indigenous Peoples in North America: 1800 to the Present"],["HIST 291","The Great War and the Making of the Modern World"],["HIST 292","The Second World War"],["HIST 301","The Historian's Craft"],["HIST 310","The Ancient World: From Mesopotamia to Greece, c. 3000-300 BC"],["HIST 312","The World of the Early Christians, from the Time of Christ to 200 AD"],["HIST 313","The World of the Early Christians, c. 200 AD to the Rise of Islam"],["HIST 315","Second Temple Judaism"],["HIST 316","Ancient Near East"],["HIST 317","Archaeology of the Holy Land"],["HIST 321","The Crusades in World History"],["HIST 331","The Reformation Era"],["HIST 342","Henry VIII and Oliver Cromwell, 1500-1660"],["HIST 343","England from the Restoration to the Industrial Revolution, 1658-1815"],["HIST 344","Modern Britain"],["HIST 345","Lion Rampant: British Imperial History in Global Perspective, 1800-1980"],["HIST 346","Winston Churchill: His Life, Times, and Leadership"],["HIST 350","Directed Studies in History and Global Studies"],["HIST 363","Modern Europe: 1789 to the Present"],["HIST 371","Modern Africa: From Empire to Independence"],["HIST 372","The Global History of Population and the Family, from 1500 to the Present"],["HIST 373","Imperial India: The Rise and Fall of the British Raj"],["HIST 375","The United States and the Middle East since 1945"],["HIST 376","Israel and the Muslim World"],["HIST 377","Islam"],["HIST 382","Global Evangelicalism since 1900"],["HIST 384","North American Economic History: 1919 to the Present"],["HIST 387","Film and Western Culture"],["HIST 441","Colossus: Britain in the Age of Queen Victoria"],["HIST 450","Advanced Directed Studies in History"],["HIST 481","The Great Depression: America from the Great Crash to Pearl Harbor"],["HIST 497","Honours Thesis in History and Global Studies I"],["HIST 499","Honours Thesis in History and Global Studies II"],["IDVP 101","Introduction to International Development"],["IDVP 201","Justice, Poverty and Theology"],["IDVP 300","Theories of International Development"],["IDVP 303","Cross-Cultural Studies"],["IDVP 304","Anthropology for Humanitarian Work"],["IDVP 311","Microfinance in Theory and Practice"],["IDVP 332","Livelihoods, Food Security and Development"],["IDVP 391","Project Management I"],["IDVP 392","Project Management II"],["IDVP 401","International Development Internship"],["IDVP 431","Operations and Humanitarian Assistance"],["IDVP 442","The Politics of Foreign Aid"],["IDVP 497","Honours Thesis in International Development I"],["IDVP 499","Honours Thesis in International Development II"],["INDS 101","University Studies in Christian Perspective"],["INDS 110","Academic Achievement Strategies"],["INDS 475","Christianity and Culture"],["LING 101","Introduction to Linguistics I"],["LING 102","Introduction to Linguistics II"],["LING 201","Phonetics"],["LING 203","Phonology I: Phonological Analysis"],["LING 204","Morphology and Syntax I"],["LING 211","Language and Society"],["LING 302","Language and Culture Acquisition"],["LING 303","Phonology II: Advanced Phonological Analysis"],["LING 304","Morphology and Syntax II"],["LING 380","Psychology of Language"],["LING 405","Field Methods"],["LING 407","Discourse Analysis"],["LING 432","Historical Linguistics"],["LING 471","Semantics and Pragmatics"],["LING 475","Principles of Bible Translation"],["LING 476","Principles of Literacy"],["LING 480","Internship in Field Linguistics"],["LING 497","Honours Thesis in Linguistics I"],["LING 499","Honours Thesis in Linguistics II"],["MATH 101","Introduction to Mathematics"],["MATH 111","Calculus I"],["MATH 112","Calculus II"],["MATH 121","Introduction to Statistics"],["MATH 131","Introductory Linear Algebra"],["MATH 151","Discrete Mathematics I"],["MATH 322","Data Analysis"],["MATH 324","Statistics for Business"],["MEDA 111","Introduction to Cinematography"],["MEDA 113","Introduction to Filmmaking"],["MEDA 121","Language of Media"],["MEDA 210","The Art of Editing"],["MEDA 212","Writing for Media"],["MEDA 214","Screenwriting"],["MEDA 220","Introduction to Graphic Design for Media"],["MEDA 230","Film as Philosophy"],["MEDA 232","Christianity on Screen"],["MEDA 280","Marketing and Media"],["MEDA 310","Advanced Directing and Producing"],["MEDA 312","Social Media Production"],["MEDA 320","Motion Graphics and Animation for Media"],["MEDA 322","Media Sound"],["MEDA 324","Artificial Intelligence and Creativity in Media"],["MEDA 340","The Bible, Story, and Media"],["MEDA 380","Corporate Storytelling"],["MEDA 3XX-DOC","Documentary Filmmaking"],["MEDA 3XX-HMJ","Hermeneutics and the Modern Message of Jesus in Media"],["MEDA 3XX-MEF","Media, Meaning, Ethics, and Faith"],["MEDA 3XX-RSS","Research Skills and Statistics"],["MEDA 3XX-SMB","Small Media Business Ownership"],["MEDA 3XX-SWC","Story of the World Cinema"],["MEDA 410","The Practice of Film Theory and Advanced Filmmaking"],["MEDA 4XX-THS","Senior Thesis"],["MEDA 4XX-APM","Advanced Project Management for Media"],["MEDA 4XX-ETH","Ethnography and Media"],["MEDA 4XX-FCW","Film as Christian Witness; Apologetics"],["MEDA 4XX-FIN","Financial Management for Media"],["MEDA 4XX-EXP","The History and Practice of Experimental Media"],["MEDA 4XX-INT","Internship"],["MEDA 4XX-MCT","Media as Culture; the Theology of Making"],["MUSC 101","Workshop in Musicianship I"],["MUSC 121","Introduction to Guitar Literature"],["MUSC 140","Group Instruction Piano"],["MUSC 141","Introduction to Piano Literature"],["MUSC 1B1-4B8","Music Ensemble: Tyndale Band"],["MUSC 1C1-4C8","Music Ensemble: Tyndale Community Choir"],["MUSC 1D1-4D8","Applied Music: Drums/Percussion"],["MUSC 1DL","Music Lesson: Drums/Percussion"],["MUSC 1E1-4E8","Applied Music: Bass Guitar"],["MUSC 1EL","Music Lesson: Bass Guitar"],["MUSC 1G1-4G8","Applied Music: Guitar"],["MUSC 1GL","Music Lesson: Guitar"],["MUSC 1J1-4J8","Music Ensemble: Tyndale Jazz Combo"],["MUSC 1P1-4P8","Applied Music: Piano"],["MUSC 1PL","Music Lesson: Piano"],["MUSC 1R1-4R8","Music Ensemble: Tyndale Chamber Orchestra"],["MUSC 1S1-4S8","Music Ensemble: Tyndale Singers"],["MUSC 1V1-4V8","Applied Music: Voice"],["MUSC 1VL","Music Lesson: Voice"],["MUSC 201","Workshop in Musicianship II"],["MUSC 202","Music History and Appreciation"],["MUSC 251","Introduction to DAWs and Music Production"],["MUSC 274","Why Music Matters"],["MUSC 301","Music Performance, Composition and Worship Music Leadership"],["MUSC 302","Music of World Cultures"],["MUSC 304","Advanced Workshop in Musicianship I"],["MUSC 312","Vocal Diction"],["MUSC 331","Masterclass in Performance"],["MUSC 332","Songwriting"],["MUSC 335","Conducting"],["MUSC 369","Internship in Music Performance and Worship Arts"],["MUSC 371","Workshop in Worship Music Leadership"],["MUSC 390","Recital I"],["MUSC 404","Advanced Workshop in Musicianship II"],["MUSC 411","Vocal Pedagogy"],["MUSC 421","Guitar Pedagogy"],["MUSC 432","Arranging"],["MUSC 441","Piano Pedagogy"],["MUSC 442","Advanced Keyboard Skills"],["MUSC 490","Recital II"],["MUSC 491","Worship Leadership Project"],["PHIL 171","Introduction to Philosophy"],["PHIL 201","Critical Reasoning"],["PHIL 213","Bioethics"],["PHIL 215","Business Ethics"],["PHIL 241","Philosophy and Film"],["PHIL 243","Introduction to Law"],["PHIL 261","The Apologetics of C.S. Lewis"],["PHIL 294","Christian Apologetics"],["PHIL 301","Metaphysics"],["PHIL 302","Belief, Truth and Knowledge"],["PHIL 311","Normative Ethical Theory"],["PHIL 313","Environmental Ethics"],["PHIL 321","Philosophy of Religion"],["PHIL 322","Philosophy of Science"],["PHIL 323","Aesthetics"],["PHIL 326","Philosophy of Mind"],["PHIL 328","Philosophy of Law"],["PHIL 330","Political Philosophy"],["PHIL 350","Directed Studies in Philosophy"],["PHIL 361","Plato"],["PHIL 362","Aristotle"],["PHIL 363","Modern Philosophy"],["PHIL 364","Aquinas"],["PHIL 366","Ancient and Medieval Philosophy"],["PHIL 370","Symbolic Logic"],["PHIL 421","The Analytic Tradition"],["PHIL 430","Philosophy of Language"],["PHIL 450","Advanced Directed Studies in Philosophy"],["PHIL 481","Seminar in Philosophy"],["PHIL 497","Honours Thesis in Philosophy I"],["PHIL 499","Honours Thesis in Philosophy II"],["PHYS 101","Physics I"],["PHYS 102","Physics II"],["PSYC 101","Introduction to Psychology I"],["PSYC 102","Introduction to Psychology II"],["PSYC 211","Developmental Psychology I"],["PSYC 212","Developmental Psychology II: Adulthood and Aging"],["PSYC 301","Personality Psychology"],["PSYC 305","The Integration of Christianity and Psychology"],["PSYC 308","Counselling Psychology"],["PSYC 310","Brain and Behaviour"],["PSYC 320","Health Psychology"],["PSYC 321","Abnormal Psychology"],["PSYC 332","Cognitive Psychology"],["PSYC 337","Cognitive Neuroscience"],["PSYC 340","Cross-Cultural Psychology"],["PSYC 341","Social Psychology"],["PSYC 345","Consumer Psychology"],["PSYC 350","Directed Studies in Psychology"],["PSYC 360","Research Methods in the Social Sciences"],["PSYC 380","Psychology of Language"],["PSYC 391","Basic Research Project in Psychology"],["PSYC 392","Research Project Proposal"],["PSYC 393","Practicum in Psychology"],["PSYC 397","Disability and Theology"],["PSYC 401","History of Psychology"],["PSYC 404","Psychotherapeutic Interventions"],["PSYC 411","Special Topics in Psychology"],["PSYC 414","Autism and Developmental Delays"],["PSYC 417","Child and Adolescent Abnormal Psychology"],["PSYC 421","Advanced Studies in Trauma: From Origins to Interventions"],["PSYC 423","Educational Psychology"],["PSYC 425","Mindfulness"],["PSYC 431","Psychology of Mass Media"],["PSYC 450","Advanced Directed Studies and Research in Psychology"],["PSYC 461","Advanced Research Methods"],["PSYC 491","Advanced Research Project in Psychology"],["PSYC 493","Advanced Practicum in Psychology"],["PSYC 497","Honours Thesis in Psychology I"],["PSYC 499","Honours Thesis in Psychology II"],["SOCI 101","Introduction to Sociology I"],["SOCI 102","Introduction to Sociology II"],["SOCI 211","Leadership"],["SOCI 231","Foundations of Crime and Punishment"],["SOCI 250","Social Problems in a Diverse Society"],["SOCI 251","Introduction to Social Welfare"],["SOCI 252","Introduction to Social Work"],["SOCI 271","Behaviour in Groups"],["SOCI 272","Language and Society"],["SOCI 301","Canadian Youth Culture"],["SOCI 302","Youth at Risk"],["SOCI 306","Anthropology for Humanitarian Work"],["SOCI 307","Cross Cultural Studies"],["SOCI 321","Marriage and the Family"],["SOCI 331","Violent Crime: Clinical and Social Implications"],["SOCI 341","Sociology of Mass Media"],["SOCI 360","Research Methods in the Social Sciences"],["SOCI 411","Special Topics in Sociology"]];
+// Program requirements, 2026-27 Tyndale program sheets (Media Arts Production: 2025-26 sheet, latest posted).
+// Row forms: "CODE" required | {pick:n, of:[...]} choose n | {pool:[...], label} choose any toward block credits
+//            {el:"label", cr:N} elective slots you fill | {free:N} free electives, filled automatically
+const PDF = "https://www.tyndale.ca/sites/default/files/programs/";
+const ENG2 = {pick:2, of:["ENGL 101","ENGL 102","ENGL 171"]};
+const HUM1 = {pick:1, of:["HIST 101","HIST 102","INDS 101","INDS 475","PHIL 171"]};
+const BSTH4 = ["BSTH 101","BSTH 102","BSTH 201","BSTH 270"];
+const FA = {el:"Fine Arts elective", cr:3, hint:"ARTM, MUSC or MEDA"};
+const NS = {el:"Natural Sciences elective", cr:3, hint:"BIOL, CHEM, PHYS, GEOG, ENVS"};
+const SS = {el:"Social Sciences elective", cr:3, hint:"PSYC, SOCI, ECON"};
+const LANG = {el:"Language electives", cr:6, hint:"FREN, GREE, HEBR, ASLN"};
+const UL = "At least 45 of 120 credit hours must be at the 3000 or 4000 level.";
+
+const coreStd = (cr, extra=[]) => ["Core requirements", cr, [...BSTH4, ENG2, HUM1, ...extra]];
+
+const BST_MAJOR = (extraBST, fourK, lang) => [
+  ...BSTH4,
+  {pick:1, of:["BSTH 280","BSTH 382","BSTH 383","BSTH 387"]},
+  {el:"Old Testament course (BSTH 310–329)", cr:3},
+  {el:"New Testament course (BSTH 330–349)", cr:3},
+  {el:"Christian Theology courses (BSTH 360–379)", cr:6},
+  {el:"Biblical Studies and Theology courses", cr:extraBST},
+  {el:"BSTH 4000-level (not BSTH 450)", cr:fourK},
+  "HIST 251","HIST 252", lang
+];
+const GH6 = {pool:["GREE 201","GREE 202","HEBR 201","HEBR 202"], label:"Greek or Hebrew, two courses in one language", cr:6};
+const GH12 = {pool:["GREE 201","GREE 202","GREE 301","GREE 302","GREE 451","HEBR 201","HEBR 202","HEBR 301","HEBR 302"], label:"Greek and/or Hebrew", cr:12};
+
+const PSYC_CORE = ["MATH 121","MATH 322","PSYC 101","PSYC 102","PSYC 211","PSYC 301","PSYC 305","PSYC 310","PSYC 321","PSYC 332","PSYC 341","PSYC 360"];
+const BBA_REQ = ["BUSI 101","BUSI 201","BUSI 203","BUSI 215","BUSI 231","BUSI 261","BUSI 262","BUSI 301","BUSI 314","BUSI 321","BUSI 325","BUSI 372","BUSI 381","BUSI 411","BUSI 420"];
+const BBA_CORE = ["Core requirements", 33, [...BSTH4,"INDS 101","PHIL 171","INDS 475",{pick:1,of:["HIST 101","HIST 102"]},ENG2,FA]];
+const ENGL_PERIOD = ["ENGL 301","ENGL 303","ENGL 305","ENGL 310","ENGL 320","ENGL 331","ENGL 332","ENGL 333","ENGL 340","ENGL 372"];
+const ENGL_AMER = ["ENGL 383","ENGL 384","ENGL 387","ENGL 388","ENGL 403"];
+const HGS_CORE = ["Core requirements", 36, [...BSTH4,{pick:2,of:["ENGL 101","ENGL 102","ENGL 171","INDS 101","INDS 475","PHIL 171"]},FA,NS,SS]];
+const HGS_CHR = {pick:1, of:["HIST 251","HIST 252","HIST 312","HIST 313"]};
+const HGS_AMER = {pick:1, of:["HIST 263","HIST 271","HIST 272","HIST 281","HIST 282","HIST 372","HIST 375","HIST 376","HIST 382","HIST 384","HIST 387","HIST 481"]};
+const HGS_EUR = {pick:1, of:["HIST 240","HIST 241","HIST 242","HIST 291","HIST 292","HIST 321","HIST 331","HIST 342","HIST 343","HIST 344","HIST 345","HIST 346","HIST 363","HIST 441"]};
+const PHIL_CORE = ["Core requirements", 36, [...BSTH4,ENG2,{pick:1,of:["HIST 101","HIST 102"]},"INDS 101","INDS 475",FA,NS,SS]];
+const PHIL_MAJ = ["PHIL 171","PHIL 201",{el:"PHIL 2000-level course",cr:3},"PHIL 301","PHIL 302","PHIL 370",{pick:1,of:["PHIL 311","PHIL 330"]},{pick:1,of:["PHIL 321","PHIL 322"]},{pick:1,of:["PHIL 363","PHIL 366"]},"PHIL 421"];
+const LING_CORE = ["Core requirements", 36, [...BSTH4,ENG2,HUM1,FA,NS]];
+const LING_REQ = ["LING 101","LING 102","LING 201","LING 203","LING 204","LING 211"];
+const MEDA_PROD1 = ["MEDA 111","MEDA 113","MEDA 121","MEDA 210"];
+const MEDA_PHIL = ["MEDA 230","PHIL 241","MEDA 212"];
+const MA_CORE = ["Core requirements", 33, [...BSTH4,ENG2,HUM1,NS]];
+const MEDA_ELECT = ["ARTM 310","MEDA 322","BUSI 231","MEDA 280","MEDA 214","MEDA 220","MEDA 312","MEDA 320","MEDA 340","MEDA 380","MEDA 310","MEDA 324","MEDA 3XX-SMB","MEDA 3XX-DOC","MEDA 3XX-HMJ","MEDA 3XX-MEF","MEDA 4XX-ETH","MEDA 4XX-FCW","MEDA 410","MEDA 4XX-EXP","MEDA 4XX-MCT","MEDA 4XX-APM","MEDA 3XX-RSS","PSYC 360"];
+const MA_HONS = ["Honours requirements", 12, ["MEDA 4XX-INT",{pick:1,of:["MEDA 4XX-THS","ARTM 312"],label:"Senior Thesis, or ARTM 312 + ARTM 350"},{pick:1,of:["MEDA 4XX-THS","ARTM 350"],label:"Second capstone course"}]];
+const MUS_CORE = ["Core requirements", 36, [...BSTH4,ENG2,HUM1,NS,SS]];
+const BRE_CORE_TOP = [...BSTH4];
+const CHRI_INTERN = {pick:1, of:["CHRI 329","CHRI 339","CHRI 349","CHRI 369"]};
+const SCI_CORE = ["Core Tyndale courses", 15, [{pick:1,of:["BSTH 101","BSTH 102"]},{pick:1,of:["ENGL 101","ENGL 102"]},{pick:1,of:["HIST 101","HIST 102"]},"INDS 101","PHIL 171"]];
+const HS_INTER = ["Interdisciplinary studies", 30, ["HEAL 301","MATH 121","MATH 322","PSYC 101","PSYC 102","PSYC 211","PSYC 212","PSYC 360","SOCI 101","SOCI 102"]];
+
+const PROGRAMS = [
+// ---------- Biblical Studies & Theology
+{id:"bst", group:"Bachelor of Arts", name:"Biblical Studies and Theology", cred:"BA", total:120, gpa:"2.0", pdf:PDF+"2026-08/Tyndale-University-Program-Requirements-Biblical-Studies-and-Theology-2026-2027.pdf",
+ blocks:[["Core requirements",27,[ENG2,HUM1,FA,NS,SS]],["Major requirements",48,BST_MAJOR(6,3,GH6)],["Electives",45,[{free:45}]]], notes:[UL,"GREE 301/302 or HEBR 301/302 may replace 3000-level BSTH electives."]},
+{id:"bst-h", group:"Bachelor of Arts Honours", name:"Biblical Studies and Theology", cred:"BA Honours", total:120, gpa:"3.0", pdf:PDF+"2026-08/Tyndale-University-Program-Requirements-Biblical-Studies-and-Theology-2026-2027.pdf",
+ blocks:[["Core requirements",27,[ENG2,HUM1,FA,NS,SS]],["Major requirements",66,[...BST_MAJOR(9,6,GH12),"BSTH 497","BSTH 499"]],["Electives",27,[{free:27}]]], notes:[UL,"Minimum cumulative GPA 3.0."]},
+{id:"bst-mdiv", group:"Dual degree", name:"Biblical Studies and Theology + MDiv", cred:"BA / MDiv", total:120, gpa:"2.0", pdf:PDF+"2026-08/Tyndale-University-Program-Requirements-Biblical-Studies-and-Theology-2026-2027.pdf",
+ blocks:[["Core requirements",27,[ENG2,HUM1,FA,NS,SS]],["Major requirements",48,BST_MAJOR(6,3,GH6)],["Minor (any except Christian Ministries)",24,[{el:"Minor courses (pick your minor below)",cr:24}]],["Electives",6,[{free:6}]],["Advanced standing",15,[{el:"Seminary (MDiv) courses transferred",cr:15}]]], notes:[UL,"Five MDiv courses transfer back as electives; both degrees conferred at completion."]},
+{id:"bst-pent", group:"Bachelor of Arts", name:"Biblical Studies and Theology – Pentecostal", cred:"BA", total:120, gpa:"2.0", pdf:PDF+"2026-08/Tyndale-University-Program-Requirements-Biblical-Studies-and-Theology-PAONL-2026-2027.pdf",
+ blocks:[["Core requirements",24,[ENG2,HUM1,FA,NS]],["Major requirements",36,[...BSTH4,{pick:1,of:["BSTH 280","BSTH 382","BSTH 383","BSTH 387"]},{el:"Old Testament course (BSTH 310–329)",cr:3},{el:"New Testament course (BSTH 330–349)",cr:3},{el:"BSTH course (not BSTH 450)",cr:3},"HIST 251","HIST 252",GH6]],
+  ["Pentecostal program",45,["CHRI 121","BSTH 267","BSTH 386","CHRI 343","CHRI 344","CHRI 308",{pick:5,of:["BSTH 332","BSTH 335","BSTH 374","BSTH 376","BSTH 377","BSTH 378","BSTH 379"]},{pick:2,of:["BUSI 383","BUSI 317","CHRI 243","PSYC 211","PSYC 212"]}]],["Electives",15,[{free:15}]]],
+ notes:[UL,"CHRI 308 (Internship in Pentecostal Ministry) is 9 credit hours."]},
+// ---------- Business
+{id:"bus", group:"Bachelor of Arts", name:"Business", cred:"BA", total:120, gpa:"2.0", pdf:PDF+"2026-08/Tyndale-University-Program-Requirements-Business-2026-2027.pdf",
+ blocks:[coreStd(33,[FA]),["Major requirements",42,["BUSI 101","BUSI 215","BUSI 231","BUSI 411",{el:"BUSI courses",cr:12},"ECON 101","ECON 102","MATH 121",{pick:3,of:["HIST 384","MATH 322","PHIL 201","PSYC 345"]}]],["Electives",45,[{free:45}]]], notes:[UL]},
+{id:"bba", group:"Bachelor of Business Administration", name:"Business Administration", cred:"BBA", total:120, gpa:"2.0", pdf:PDF+"2026-08/Tyndale-University-Program-Requirements-Business-Administration-2026-2027.pdf",
+ blocks:[BBA_CORE,["Major requirements",66,[...BBA_REQ,{el:"Business Administration courses",cr:12},"ECON 101","ECON 102","MATH 121"]],["Electives",21,[{free:21}]]], notes:[UL,"6 elective credit hours must be at the 3000/4000 level.","BUSI 102 recommended without Grade 12 math."]},
+{id:"bba-h", group:"Bachelor of Business Administration", name:"Business Administration Honours", cred:"BBA Honours", total:120, gpa:"3.0", pdf:PDF+"2026-08/Tyndale-University-Program-Requirements-Business-Administration-2026-2027.pdf",
+ blocks:[BBA_CORE,["Major requirements",75,[...BBA_REQ,{el:"BUSI 3000-level courses",cr:15},{el:"BUSI 4000-level courses",cr:6},"ECON 101","ECON 102","MATH 121"]],["Electives",12,[{free:12}]]], notes:[UL,"Minimum cumulative GPA 3.0."]},
+// ---------- Christian Ministry
+{id:"cmpt", group:"Bachelor of Arts", name:"Christian Ministry and Practical Theology", cred:"BA", total:120, gpa:"2.0", pdf:PDF+"2026-08/Tyndale-University-Program-Requirements-BA-Christian-Ministry-and-Practical-Theology-2026-2027.pdf",
+ blocks:[coreStd(39,[FA,NS,SS]),["Major requirements",48,[{el:"BSTH 310–349 (Bible)",cr:3},{el:"BSTH 360–379 (Theology)",cr:3},{el:"BSTH 310–379",cr:3},"CHRI 121","CHRI 203",CHRI_INTERN,"CHRI 343","CHRI 344","CHRI 347",GH6,{el:"BSTH/CHRI courses, PHIL 294, PSYC 211 or 212",cr:15}]],["Electives",33,[{free:33}]]], notes:[UL]},
+// ---------- English
+{id:"engl", group:"Bachelor of Arts", name:"English", cred:"BA", total:120, gpa:"2.0", pdf:PDF+"2026-08/Tyndale-University-Program-Requirements-English-2026-2027.pdf", conc:["engl-wc"],
+ blocks:[["Core requirements",33,[...BSTH4,HUM1,FA,NS,SS]],["Major requirements",36,["ENGL 101","ENGL 102",{el:"ENGL course",cr:3},{pick:1,of:["ENGL 262","ENGL 263"]},{pick:1,of:["ENGL 375","ENGL 378"]},{el:"ENGL 3000-level courses",cr:9},{el:"ENGL 4000-level course",cr:3},{pick:1,of:ENGL_AMER},{pick:1,of:ENGL_PERIOD}]],["Electives",51,[{free:51}]]], notes:[UL]},
+{id:"engl-h", group:"Bachelor of Arts Honours", name:"English", cred:"BA Honours", total:120, gpa:"3.0", pdf:PDF+"2026-08/Tyndale-University-Program-Requirements-English-2026-2027.pdf", conc:["engl-wc"],
+ blocks:[["Core requirements",33,[...BSTH4,HUM1,FA,NS,SS]],["Major requirements",45,["ENGL 101","ENGL 102",{el:"ENGL course",cr:3},{pick:1,of:["ENGL 262","ENGL 263"]},{pick:1,of:["ENGL 375","ENGL 378"]},{el:"ENGL 3000-level course",cr:3},{el:"ENGL 4000-level course",cr:3},"ENGL 400",{pick:1,of:ENGL_AMER},{pick:3,of:ENGL_PERIOD},{pool:["ENGL 497","ENGL 499"],label:"Honours thesis (ENGL 497 + 499) or two ENGL 4000-level courses",cr:6}]],["Electives",42,[{free:42}]]], notes:[UL,"Minimum cumulative GPA 3.0."]},
+// ---------- History
+{id:"hgs", group:"Bachelor of Arts", name:"History and Global Studies", cred:"BA", total:120, gpa:"2.0", pdf:PDF+"2026-09/Tyndale-University-Program-Requirements-History-and-Global-Studies-2026-2027.pdf",
+ blocks:[HGS_CORE,["Major requirements",36,["HIST 101","HIST 102","HIST 301",{el:"HIST 2000-level course",cr:3},{el:"HIST 3000-level courses",cr:12},{el:"HIST 4000-level course",cr:3},HGS_CHR,HGS_AMER,HGS_EUR]],["Electives",48,[{free:48}]]], notes:[UL]},
+{id:"hgs-h", group:"Bachelor of Arts Honours", name:"History and Global Studies", cred:"BA Honours", total:120, gpa:"3.0", pdf:PDF+"2026-09/Tyndale-University-Program-Requirements-History-and-Global-Studies-2026-2027.pdf",
+ blocks:[HGS_CORE,["Major requirements",48,["HIST 101","HIST 102","HIST 301",{el:"HIST 3000-level courses",cr:18},HGS_CHR,HGS_AMER,HGS_EUR,"HIST 497","HIST 499"]],["Electives",36,[{free:36}]]], notes:[UL,"Minimum cumulative GPA 3.0."]},
+// ---------- Human Services
+{id:"ece", group:"Bachelor of Arts", name:"Human Services – Early Childhood Education", cred:"BA + Diploma", total:120, gpa:"2.0", pdf:PDF+"2026-08/Tyndale-University-Program-Requirements-Early-Childhood-Education-2026-2027.pdf",
+ blocks:[coreStd(33,[FA]),HS_INTER,["Major requirements",39,[{el:"PSYC courses",cr:6},"SOCI 321",{el:"Seneca Polytechnic ECE diploma (year 3)",cr:30}]],["Electives",18,[{free:18}]]], notes:["One-year Early Childhood Education diploma at Seneca Polytechnic in third year (30 transfer credits)."]},
+{id:"ssw", group:"Bachelor of Arts", name:"Human Services – Social Service Work", cred:"BA + Diploma", total:120, gpa:"2.0", pdf:PDF+"2026-10/Tyndale-University-Program-Requirements-Social-Service-Work-2026-2027.pdf",
+ blocks:[coreStd(33,[FA]),HS_INTER,["Major requirements",39,["SOCI 251","SOCI 252","SOCI 321",{el:"Seneca Polytechnic Social Service Worker diploma (year 3)",cr:30}]],["Electives",18,[{free:18}]]], notes:["One-year diploma at Seneca Polytechnic in third year (30 transfer credits)."]},
+// ---------- Linguistics
+{id:"ling", group:"Bachelor of Arts", name:"Linguistics", cred:"BA", total:120, gpa:"2.0", pdf:PDF+"2026-09/Tyndale-University-Program-Requirements-Linguistics-2026-2027.pdf", conc:["ling-bt"],
+ blocks:[LING_CORE,["Major requirements",36,[...LING_REQ,{el:"LING 3000-level courses",cr:12},{el:"LING 4000-level courses",cr:6}]],["Electives",48,[{free:48}]]], notes:[UL]},
+{id:"ling-h", group:"Bachelor of Arts Honours", name:"Linguistics", cred:"BA Honours", total:120, gpa:"3.0", pdf:PDF+"2026-09/Tyndale-University-Program-Requirements-Linguistics-2026-2027.pdf", conc:["ling-bt"],
+ blocks:[LING_CORE,["Major requirements",48,[...LING_REQ,{el:"LING 3000-level courses",cr:18},{el:"LING 4000-level courses",cr:6},"LING 497","LING 499"]],["Electives",36,[{free:36}]]], notes:[UL,"Minimum cumulative GPA 3.0."]},
+// ---------- Media Arts
+{id:"ma-bus", group:"Bachelor of Arts", name:"Media Arts – Business", cred:"BA", total:120, gpa:"2.0", pdf:PDF+"2026-09/Tyndale-University-Program-Requirements-Media-Arts-Business-2026-2027.pdf",
+ blocks:[MA_CORE,["Major requirements",36,[{pool:MEDA_PROD1,label:"Production foundations"},{pool:MEDA_PHIL,label:"Film, philosophy and writing"},{pool:["BUSI 231","MEDA 280"],label:"Marketing"},{pool:["ARTM 340","MEDA 232"],label:"Faith and film"},{pool:["HIST 387","MEDA 3XX-SWC","MEDA 3XX-SMB","MEDA 380"],label:"Cinema history and media business"},{pool:["MEDA 3XX-RSS","PSYC 360","MEDA 4XX-APM"],label:"Research and project management"}]],["Major electives",9,[{pick:3,of:MEDA_ELECT}]],["Electives",42,[{free:42}]]], notes:[UL,"Major rows are grouped as on the program sheet; count toward the 36-credit total."]},
+{id:"ma-bus-h", group:"Bachelor of Arts Honours", name:"Media Arts – Business", cred:"BA Honours", total:120, gpa:"3.0", pdf:PDF+"2026-09/Tyndale-University-Program-Requirements-Media-Arts-Business-2026-2027.pdf",
+ blocks:[MA_CORE,["Major requirements",36,[{pool:MEDA_PROD1,label:"Production foundations"},{pool:MEDA_PHIL,label:"Film, philosophy and writing"},{pool:["BUSI 231","MEDA 280"],label:"Marketing"},{pool:["ARTM 340","MEDA 232"],label:"Faith and film"},{pool:["HIST 387","MEDA 3XX-SWC","MEDA 3XX-SMB","MEDA 380"],label:"Cinema history and media business"},{pool:["MEDA 3XX-RSS","PSYC 360","MEDA 4XX-APM"],label:"Research and project management"}]],MA_HONS,["Major electives",9,[{pick:3,of:MEDA_ELECT}]],["Electives",30,[{free:30}]]], notes:[UL,"Minimum cumulative GPA 3.0."]},
+{id:"ma-fa", group:"Bachelor of Arts", name:"Media Arts – Fine Arts", cred:"BA", total:120, gpa:"2.0", pdf:PDF+"2026-09/Tyndale-University-Program-Requirements-Media-Arts-Fine-Arts-2026-2027.pdf",
+ blocks:[MA_CORE,["Major requirements",36,[{pool:MEDA_PROD1,label:"Production foundations"},{pool:MEDA_PHIL,label:"Film, philosophy and writing"},{pool:["ARTM 340","MEDA 232","MEDA 320"],label:"Faith, film and animation"},{pool:["HIST 387","MEDA 3XX-SWC"],label:"Cinema history"},{pool:["ARTM 310","MEDA 322","MEDA 380","MEDA 3XX-DOC","MEDA 4XX-EXP"],label:"Sound, story and experimental media"}]],["Major electives",9,[{pick:3,of:MEDA_ELECT}]],["Electives",42,[{free:42}]]], notes:[UL]},
+{id:"ma-fa-h", group:"Bachelor of Arts Honours", name:"Media Arts – Fine Arts", cred:"BA Honours", total:120, gpa:"3.0", pdf:PDF+"2026-09/Tyndale-University-Program-Requirements-Media-Arts-Fine-Arts-2026-2027.pdf",
+ blocks:[MA_CORE,["Major requirements",36,[{pool:MEDA_PROD1,label:"Production foundations"},{pool:MEDA_PHIL,label:"Film, philosophy and writing"},{pool:["ARTM 340","MEDA 232","MEDA 320"],label:"Faith, film and animation"},{pool:["HIST 387","MEDA 3XX-SWC"],label:"Cinema history"},{pool:["ARTM 310","MEDA 322","MEDA 380","MEDA 3XX-DOC","MEDA 4XX-EXP"],label:"Sound, story and experimental media"}]],MA_HONS,["Major electives",9,[{pick:3,of:MEDA_ELECT}]],["Electives",30,[{free:30}]]], notes:[UL,"Minimum cumulative GPA 3.0."]},
+{id:"ma-min", group:"Bachelor of Arts", name:"Media Arts – Media Ministry", cred:"BA", total:120, gpa:"2.0", pdf:PDF+"2026-09/Tyndale-University-Program-Requirements-Media-Arts-Media-Ministry-2026-2027.pdf",
+ blocks:[MA_CORE,["Major requirements",36,[{pool:MEDA_PROD1,label:"Production foundations"},{pool:MEDA_PHIL,label:"Film, philosophy and writing"},{pool:["ARTM 340","MEDA 232","MEDA 340"],label:"Faith, Bible and media"},{pool:["HIST 387","MEDA 3XX-SWC","MEDA 3XX-HMJ","MEDA 3XX-MEF","MEDA 4XX-FCW","MEDA 4XX-MCT"],label:"Theology of media"}]],["Major electives",9,[{pick:3,of:MEDA_ELECT}]],["Electives",42,[{free:42}]]], notes:[UL]},
+{id:"ma-min-h", group:"Bachelor of Arts Honours", name:"Media Arts – Media Ministry", cred:"BA Honours", total:120, gpa:"3.0", pdf:PDF+"2026-09/Tyndale-University-Program-Requirements-Media-Arts-Media-Ministry-2026-2027.pdf",
+ blocks:[MA_CORE,["Major requirements",36,[{pool:MEDA_PROD1,label:"Production foundations"},{pool:MEDA_PHIL,label:"Film, philosophy and writing"},{pool:["ARTM 340","MEDA 232","MEDA 340"],label:"Faith, Bible and media"},{pool:["HIST 387","MEDA 3XX-SWC","MEDA 3XX-HMJ","MEDA 3XX-MEF","MEDA 4XX-FCW","MEDA 4XX-MCT"],label:"Theology of media"}]],MA_HONS,["Major electives",9,[{pick:3,of:MEDA_ELECT}]],["Electives",30,[{free:30}]]], notes:[UL,"Minimum cumulative GPA 3.0."]},
+{id:"ma-prod", group:"Bachelor of Arts", name:"Media Arts – Production", cred:"BA", total:120, gpa:"2.0", pdf:PDF+"2025-08/Tyndale-University-Program-Requirements-Media-Arts-Production-2025-2026.pdf", sheetYear:"2025–26",
+ blocks:[coreStd(39,[LANG,NS]),["Major requirements",39,[{pool:[...MEDA_PROD1,"MEDA 212","MEDA 214"],label:"Production foundations"},{pick:1,of:["MEDA 230","PHIL 241"]},{pool:["ARTM 340","MEDA 232"],label:"Faith and film"},{pool:["HIST 387","MEDA 3XX-SWC"],label:"Cinema history"},{pool:["ARTM 310","MEDA 322"],label:"Sound"},{el:"MEDA 3000-level courses",cr:6},"MEDA 410"]],["Major electives",6,[{pick:2,of:MEDA_ELECT}]],["Electives",36,[{free:36}]]], notes:[UL,"Tyndale had not posted a 2026–27 Production sheet when this was built; this uses 2025–26."]},
+{id:"ma-prod-h", group:"Bachelor of Arts Honours", name:"Media Arts – Production", cred:"BA Honours", total:120, gpa:"3.0", pdf:PDF+"2025-08/Tyndale-University-Program-Requirements-Media-Arts-Production-2025-2026.pdf", sheetYear:"2025–26",
+ blocks:[coreStd(39,[LANG,NS]),["Major requirements",39,[{pool:[...MEDA_PROD1,"MEDA 212","MEDA 214"],label:"Production foundations"},{pick:1,of:["MEDA 230","PHIL 241"]},{pool:["ARTM 340","MEDA 232"],label:"Faith and film"},{pool:["HIST 387","MEDA 3XX-SWC"],label:"Cinema history"},{pool:["ARTM 310","MEDA 322"],label:"Sound"},{el:"MEDA 3000-level courses",cr:6},"MEDA 410"]],MA_HONS,["Major electives",6,[{pick:2,of:MEDA_ELECT}]],["Electives",24,[{free:24}]]], notes:[UL,"Minimum cumulative GPA 3.0.","Uses the 2025–26 sheet."]},
+// ---------- Music
+{id:"musc", group:"Bachelor of Arts", name:"Music", cred:"BA", total:120, gpa:"2.0", pdf:PDF+"2026-09/Tyndale-University-Program-Requirements-Music-BA-2026-2027.pdf",
+ blocks:[MUS_CORE,["Major requirements",48,["MUSC 101","MUSC 201","MUSC 202","MUSC 390",{pick:1,of:["MUSC 490","MUSC 491"]},{el:"Music and Worship Arts courses",cr:12},{el:"Applied Music on your instrument (voice, piano, guitar, bass, drums)",cr:12},{el:"Music Ensemble",cr:12}]],["Electives",36,[{free:36}]]], notes:[UL,"Vocal students: Tyndale Singers (8 cr) plus other ensembles (4 cr). Instrumental: Band or Jazz Combo."]},
+{id:"musc-perf", group:"Bachelor of Fine Arts Honours", name:"Music: Performance", cred:"BFA Honours", total:122, gpa:"3.0", pdf:PDF+"2026-09/Tyndale-University-Program-Requirements-Music-Performance-BFA-2026-2027.pdf",
+ blocks:[MUS_CORE,["Major requirements",74,["MUSC 101","MUSC 201","MUSC 202","MUSC 304","MUSC 331","MUSC 332","MUSC 335","MUSC 369","MUSC 390","MUSC 404","MUSC 432","MUSC 490",{el:"Music Technology",cr:3},{el:"Instrument literature and pedagogy (e.g. MUSC 141 + 441 + 442 piano, 121 + 421 guitar, 312 + 411 voice)",cr:8},{el:"Music and Worship Arts course",cr:3},{el:"Applied Music on your instrument",cr:16},{el:"Music Ensemble",cr:8}]],["Electives",12,[{free:12}]]], notes:["At least 45 of 122 credit hours must be at the 3000 or 4000 level."]},
+{id:"musc-wa", group:"Bachelor of Fine Arts Honours", name:"Music: Worship Arts", cred:"BFA Honours", total:122, gpa:"3.0", pdf:PDF+"2026-10/Tyndale-University-Music-Worship-Arts-BFA-Program-Requirements-2026-2027.pdf",
+ blocks:[MUS_CORE,["Major requirements",74,["ARTM 310","CHRI 346","CHRI 347","MUSC 101","MUSC 201","MUSC 202","MUSC 304","MUSC 332","MUSC 335","MUSC 369","MUSC 371","MUSC 390",{el:"Pedagogy (MUSC 4X1)",cr:2},"MUSC 404","MUSC 432","MUSC 491",{el:"Applied Music on your instrument",cr:16},{el:"Music Ensemble",cr:8}]],["Electives",12,[{free:12}]]], notes:["At least 45 of 122 credit hours must be at the 3000 or 4000 level."]},
+// ---------- Philosophy
+{id:"phil", group:"Bachelor of Arts", name:"Philosophy", cred:"BA", total:120, gpa:"2.0", pdf:PDF+"2026-10/Tyndale-University-Program-Requirements-Philosophy-2026-2027.pdf", conc:["phil-apol","phil-law"],
+ blocks:[PHIL_CORE,["Major requirements",36,[...PHIL_MAJ,{el:"PHIL 3000-level courses",cr:6},{el:"PHIL 4000-level course",cr:3}]],["Electives",48,[{free:48}]]], notes:[UL]},
+{id:"phil-h", group:"Bachelor of Arts Honours", name:"Philosophy", cred:"BA Honours", total:120, gpa:"3.0", pdf:PDF+"2026-10/Tyndale-University-Program-Requirements-Philosophy-2026-2027.pdf", conc:["phil-apol","phil-law"],
+ blocks:[PHIL_CORE,["Major requirements",48,[...PHIL_MAJ,{el:"PHIL 3000-level courses",cr:9},{el:"PHIL 4000-level courses",cr:6},"PHIL 497","PHIL 499"]],["Electives",36,[{free:36}]]], notes:[UL,"Minimum cumulative GPA 3.0. Apply in the winter of second year."]},
+// ---------- Psychology
+{id:"psyc", group:"Bachelor of Arts", name:"Psychology", cred:"BA", total:120, gpa:"2.0", pdf:PDF+"2026-10/Tyndale-University-Program-Requirements-Psychology-with-DCP-2026-2027.pdf",
+ blocks:[coreStd(33,[FA]),["Major requirements",48,[...PSYC_CORE,{el:"PSYC 3000-level courses",cr:6},{el:"PSYC 4000-level courses",cr:6}]],["Electives",39,[{free:39}]]], notes:[UL]},
+{id:"psyc-h", group:"Bachelor of Arts Honours", name:"Psychology", cred:"BA Honours", total:120, gpa:"3.0", pdf:PDF+"2026-10/Tyndale-University-Program-Requirements-Psychology-with-DCP-2026-2027.pdf",
+ blocks:[coreStd(33,[FA]),["Major requirements",54,[...PSYC_CORE,{el:"PSYC 3000-level courses",cr:6},"PSYC 401","PSYC 461","PSYC 497","PSYC 499"]],["Electives",33,[{free:33}]]], notes:[UL,"Finish PSYC 360 and PSYC 461 by the end of third year; arrange a thesis supervisor by February 28 of third year."]},
+{id:"psyc-dcp", group:"Degree completion", name:"Psychology Degree Completion", cred:"BA", total:120, gpa:"2.0", pdf:PDF+"2026-10/Tyndale-University-Program-Requirements-Psychology-with-DCP-2026-2027.pdf",
+ blocks:[coreStd(33,[FA]),["Major requirements",51,[...PSYC_CORE,"PSYC 392",{el:"PSYC 3000-level courses",cr:6},"PSYC 401",{el:"PSYC 4000-level course",cr:3}]],["Electives",36,[{free:36}]]], notes:[UL,"For students 25+ with 30–42 transferable credit hours."]},
+// ---------- BRE
+{id:"bre-gm", group:"Bachelor of Religious Education", name:"General Ministries", cred:"BRE", total:90, gpa:"2.0", pdf:PDF+"2026-08/Tyndale-University-Program-Requirements-General-Ministries-2026-2027.pdf",
+ blocks:[["Core requirements",63,[...BRE_CORE_TOP,{el:"Biblical Studies and Theology courses",cr:12},{pick:1,of:["CHRI 221","CHRI 321"]},{pick:1,of:["CHRI 341","CHRI 361"]},{el:"Evangelism or Global Christianity",cr:3},"ENGL 101","ENGL 102","ENGL 171","HIST 251","HIST 252","INDS 101","PHIL 171",FA,NS,{el:"Social Sciences electives",cr:6}]],["General Ministries focus",15,["CHRI 121","CHRI 344",{el:"Christian Ministries courses",cr:6},CHRI_INTERN]],["Electives",12,[{free:12}]]], notes:["At least 24 of 90 credit hours must be at the 3000 or 4000 level."]},
+{id:"bre-dcp", group:"Degree completion", name:"BRE Degree Completion", cred:"BRE", total:90, gpa:"2.0", pdf:PDF+"2026-08/Tyndale-University-Program-Requirements-General-Ministries-2026-2027.pdf",
+ blocks:[["Major requirements",60,[...BRE_CORE_TOP,{el:"Biblical Studies and Theology courses",cr:12},"CHRI 121",{el:"Christian Ministries courses",cr:9},"CHRI 394","CHRI 395",{el:"ENGL course",cr:3},CHRI_INTERN,{pick:1,of:["CHRI 221","CHRI 321"]},{pick:1,of:["CHRI 341","CHRI 361"]},{pick:1,of:["HIST 251","HIST 252"]},"PHIL 171"]],["Transfer credit",30,[{el:"Transfer courses",cr:18},{el:"Humanities / Social Science transfer courses",cr:12}]]], notes:["At least 24 of 90 credit hours at the 3000/4000 level. For students 25+ with ministry experience."]},
+{id:"bre-pm", group:"Bachelor of Religious Education", name:"Pastoral Ministry", cred:"BRE", total:90, gpa:"2.0", pdf:PDF+"2026-10/Tyndale-University-Program-Requirements-Pastoral-Ministry-2026-2027.pdf",
+ blocks:[["Core requirements",63,[...BRE_CORE_TOP,{el:"Biblical Studies and Theology courses",cr:9},"CHRI 203",{pick:1,of:["CHRI 221","CHRI 321"]},{pick:1,of:["CHRI 341","CHRI 361"]},{el:"Global Christianity",cr:3},{pick:1,of:["ENGL 101","ENGL 102","ENGL 171"]},"HIST 251","HIST 252","INDS 101","PHIL 171",FA,NS,{el:"Social Sciences electives",cr:6}]],["Pastoral Ministry focus",15,["CHRI 121","CHRI 343","CHRI 344","CHRI 349",{pick:1,of:["CHRI 341","CHRI 346","CHRI 347"]}]],["Electives",12,[{free:12}]]], notes:["At least 24 of 90 credit hours must be at the 3000 or 4000 level."]},
+{id:"bre-ym", group:"Bachelor of Religious Education", name:"Youth Ministry", cred:"BRE", total:90, gpa:"2.0", pdf:PDF+"2026-10/Tyndale-University-Program-Requirements-Youth-Ministry-2026-2027.pdf",
+ blocks:[["Core requirements",63,[...BRE_CORE_TOP,{el:"Biblical Studies and Theology courses",cr:12},"CHRI 203",{pick:1,of:["CHRI 221","CHRI 321"]},{pick:1,of:["CHRI 341","CHRI 361"]},{pick:2,of:["ENGL 101","ENGL 102","ENGL 171","HIST 251","HIST 252","INDS 101","PHIL 171"]},FA,NS,{el:"Social Sciences electives",cr:6}]],["Youth Ministry focus",15,["CHRI 121","CHRI 339","CHRI 344",{pick:1,of:["CHRI 331","CHRI 332","CHRI 338","CHRI 343"]}]],["Electives",12,[{free:12}]]], notes:["At least 24 of 90 credit hours must be at the 3000 or 4000 level."]},
+// ---------- BSc 2+2
+{id:"biol", group:"Bachelor of Science (2+2 with Redeemer)", name:"Biology (Honours)", cred:"BSc Honours", total:60, gpa:"C- min. per course", pdf:PDF+"2026-08/Tyndale-University-Program-Requirements-Biology-2026-2027.pdf",
+ blocks:[SCI_CORE,["Science courses",45,["MATH 121","SOCI 101","BIOL 103","BIOL 104","BIOL 221","BIOL 231","CHEM 101","CHEM 102","MATH 111",{pick:1,of:["MATH 112","PHYS 101"]},{el:"Flora & Fauna of Southwestern Ontario / other",cr:15}]]], notes:["This tracks your two Tyndale years (60 credit hours). Years 3 and 4 are at Redeemer University."]},
+{id:"hs-premed", group:"Bachelor of Science (2+2 with Redeemer)", name:"Health Sciences Pre-Medicine, Chemistry Minor", cred:"BSc", total:60, gpa:"C- min. per course", pdf:PDF+"2026-09/Tyndale-University-Program-Requirements-Pre-Med-Chemistry-Minor-2026-2027.pdf",
+ blocks:[SCI_CORE,["Science courses",45,["HEAL 301","PSYC 101","MATH 121","SOCI 101","BIOL 103","BIOL 104","BIOL 231","CHEM 101","CHEM 102","MATH 111","MATH 112","PHYS 101",{el:"Foundations of Human Anatomy I & II",cr:9}]]], notes:["Tracks your two Tyndale years. Years 3 and 4 are at Redeemer University."]},
+{id:"hs-prof", group:"Bachelor of Science (2+2 with Redeemer)", name:"Health Sciences Professional, Psychology Minor", cred:"BSc", total:60, gpa:"C- min. per course", pdf:PDF+"2026-09/Tyndale-University-Program-Requirements-Health-Science-Professional-Psychology-Minor-2026-2027.pdf",
+ blocks:[SCI_CORE,["Science courses",45,["HEAL 301","PSYC 101","PSYC 102","MATH 121","SOCI 101","BIOL 103","BIOL 104","BIOL 231","CHEM 101","CHEM 102","PHYS 101",{el:"Foundations of Human Anatomy I & II",cr:12}]]], notes:["Tracks your two Tyndale years. Years 3 and 4 are at Redeemer University."]},
+];
+
+const MINORS = [
+{id:"m-bst", name:"Biblical Studies and Theology", total:24, pdf:PDF+"2026-08/Tyndale-University-Program-Requirements-Biblical-Studies-and-Theology-2026-2027.pdf", rows:[...BSTH4,{el:"Old Testament course (BSTH 310–329)",cr:3},{el:"New Testament course (BSTH 330–349)",cr:3},{el:"Christian Theology course (BSTH 360–379)",cr:3},{el:"BSTH course",cr:3}]},
+{id:"m-bus", name:"Business Administration", total:24, pdf:PDF+"2026-08/Tyndale-University-Program-Requirements-Business-2026-2027.pdf", rows:["BUSI 101","BUSI 215","BUSI 231","BUSI 261","BUSI 262",{el:"BUSI 2000-level course",cr:3},{el:"BUSI 3000-level courses",cr:6}]},
+{id:"m-child", name:"Children's Ministry", total:18, pdf:PDF+"2026-08/Tyndale-University-Program-Requirements-Childrens-Ministry-2026-2027.pdf", rows:["CHRI 121","CHRI 322","CHRI 329","CHRI 344",{el:"CHRI courses or PSYC 211",cr:6}]},
+{id:"m-apol", name:"Christian Apologetics", total:24, pdf:PDF+"2026-08/Tyndale-University-Program-Requirements-Christian-Apologetics-2026-2027.pdf", rows:["PHIL 171","PHIL 201","PHIL 261","PHIL 294",{pick:1,of:["PHIL 321","PHIL 322"]},{el:"Approved apologetics electives",cr:9}], note:"Not open to Philosophy majors."},
+{id:"m-engl", name:"English", total:24, pdf:PDF+"2026-08/Tyndale-University-Program-Requirements-English-2026-2027.pdf", rows:["ENGL 101","ENGL 102",{pick:1,of:["ENGL 262","ENGL 263"]},{el:"ENGL 3000-level courses",cr:6},{el:"ENGL courses",cr:9}]},
+{id:"m-ethlaw", name:"Ethics and Law", total:24, pdf:PDF+"2026-08/Tyndale-University-Program-Requirements-Ethics-and-Law-2026-2027.pdf", rows:["BUSI 321","PHIL 201","PHIL 243","PHIL 311","PHIL 328","PHIL 370",{pick:2,of:["BSTH 321","PHIL 213","PHIL 215","PHIL 313","PHIL 330","PHIL 481"]}], note:"Not open to Philosophy majors."},
+{id:"m-hgs", name:"History and Global Studies", total:24, pdf:PDF+"2026-09/Tyndale-University-Program-Requirements-History-and-Global-Studies-2026-2027.pdf", rows:["HIST 101","HIST 102",{el:"HIST 2000-level courses",cr:15},"HIST 301"]},
+{id:"m-ics", name:"Intercultural Studies", total:18, pdf:PDF+"2026-09/Tyndale-University-Program-Requirements-Intercultural-Studies-2026-2027.pdf", rows:["CHRI 121","CHRI 344","CHRI 361","CHRI 369",{el:"CHRI or IDVP courses",cr:6}]},
+{id:"m-ling", name:"Linguistics", total:24, pdf:PDF+"2026-09/Tyndale-University-Program-Requirements-Linguistics-2026-2027.pdf", rows:["LING 101","LING 102",{el:"LING 2000-level courses",cr:12},{el:"LING 3000-level courses",cr:6}]},
+{id:"m-meda", name:"Media Arts", total:24, pdf:PDF+"2026-09/Tyndale-University-Program-Requirements-Media-Arts-Business-2026-2027.pdf", rows:[{pool:MEDA_PROD1,label:"Production foundations"},{pool:MEDA_PHIL,label:"Film, philosophy and writing"},{el:"MEDA 3000-level courses",cr:9}]},
+{id:"m-mwa", name:"Music and Worship Arts", total:24, pdf:PDF+"2026-09/Tyndale-University-Program-Requirements-Music-Worship-Arts-Minor-2026-2027.pdf", rows:["CHRI 346","CHRI 347","MUSC 101","MUSC 202","MUSC 369",{pick:1,of:["MUSC 1B1-4B8","MUSC 1C1-4C8","MUSC 1J1-4J8","MUSC 1S1-4S8"]},{el:"Applied Music or music elective",cr:2},{el:"MUSC, ARTM 310, ARTM 312 or CHRI 340",cr:6}]},
+{id:"m-past", name:"Pastoral Ministry", total:18, pdf:PDF+"2026-10/Tyndale-University-Program-Requirements-Pastoral-Ministry-2026-2027.pdf", rows:["CHRI 121","CHRI 343","CHRI 344","CHRI 349",{el:"CHRI 3000-level, PSYC 211 or PSYC 212",cr:6}]},
+{id:"m-phil", name:"Philosophy", total:24, pdf:PDF+"2026-10/Tyndale-University-Program-Requirements-Philosophy-2026-2027.pdf", rows:["PHIL 171","PHIL 201","PHIL 370",{el:"PHIL 2000-level courses",cr:6},{el:"PHIL 3000-level courses",cr:9}]},
+{id:"m-psyc", name:"Psychology", total:24, pdf:PDF+"2026-10/Tyndale-University-Program-Requirements-Psychology-with-DCP-2026-2027.pdf", rows:["PSYC 101","PSYC 102",{el:"PSYC 2000-level courses",cr:6},{el:"PSYC 3000-level courses",cr:12}]},
+{id:"m-soci", name:"Sociology", total:24, pdf:PDF+"2026-10/Tyndale-University-Program-Requirements-Sociology-2026-2027.pdf", rows:["SOCI 101","SOCI 102",{el:"SOCI 2000/3000-level courses",cr:18}]},
+{id:"m-youth", name:"Youth Ministry", total:18, pdf:PDF+"2026-10/Tyndale-University-Program-Requirements-Youth-Ministry-2026-2027.pdf", rows:["CHRI 121","CHRI 339","CHRI 344",{pick:1,of:["CHRI 331","CHRI 332"]},{el:"CHRI courses or PSYC 211",cr:6}]},
+];
+
+const CONCENTRATIONS = [
+{id:"engl-wc", name:"Writing and Communication", total:15, pdf:PDF+"2026-10/Tyndale-University-Program-Requirements-Writing-Communication-2026-2027.pdf", rows:[{pick:1,of:["ENGL 262","ENGL 263","PHIL 201"]},{pick:3,of:["ARTM 340","ARTM 344","BUSI 203","ENGL 361","ENGL 363","ENGL 440","MEDA 212","MEDA 214","MEDA 280","MEDA 380","PHIL 323"]},{el:"Additional concentration course (see sheet)",cr:3}], note:"On top of the English major. At least one of the three must be 3000/4000 level."},
+{id:"ling-bt", name:"Bible Translation", total:24, pdf:PDF+"2026-08/Tyndale-University-Program-Requirements-Linguistics-Bible-Translation-2026-2027.pdf", rows:["CHRI 366","LING 405","LING 471","LING 475",{pick:4,of:["GREE 201","GREE 202","GREE 301","GREE 302","HEBR 201","HEBR 202","HEBR 301","HEBR 302"]}]},
+{id:"phil-apol", name:"Christian Apologetics", total:12, pdf:PDF+"2026-08/Tyndale-University-Program-Requirements-Christian-Apologetics-2026-2027.pdf", rows:["PHIL 261","PHIL 294",{el:"Approved apologetics electives",cr:6}], note:"On top of the Philosophy major."},
+{id:"phil-law", name:"Law", total:15, pdf:PDF+"2026-09/Tyndale-University-Program-Requirements-Philosophy-Law-2026-2027.pdf", rows:["BUSI 321","PHIL 243","PHIL 311","PHIL 328",{pick:1,of:["PHIL 213","PHIL 215","PHIL 313"]}], note:"On top of the Philosophy major."},
+];
+
+const CREDIT_OVERRIDES = {"CHRI 308":9,"MUSC 335":2,"MUSC 369":2,"MUSC 390":1,"MUSC 490":2,"MUSC 491":2,"MUSC 411":2,"MUSC 421":2,"MUSC 441":2,"MUSC 1B1-4B8":1,"MUSC 1C1-4C8":1,"MUSC 1J1-4J8":1,"MUSC 1S1-4S8":1,"MUSC 1R1-4R8":1,"MUSC 1V1-4V8":2,"MUSC 1P1-4P8":2,"MUSC 1G1-4G8":2,"MUSC 1E1-4E8":2,"MUSC 1D1-4D8":2,"MUSC 1VL":1,"MUSC 1PL":1,"MUSC 1GL":1,"MUSC 1EL":1,"MUSC 1DL":1};
+
+const TYNDALE_DATES = [
+["2026-08-21","2026-08-21","Fall registration deadline","deadline"],
+["2026-08-27","2026-08-27","First day of modular classes","term"],
+["2026-09-07","2026-09-07","Labour Day","holiday"],
+["2026-09-07","2026-09-09","New student orientation","term"],
+["2026-09-10","2026-09-10","Fall classes begin","term"],
+["2026-09-15","2026-09-15","Commencement Chapel","term"],
+["2026-09-23","2026-09-23","Last day to add/drop Fall courses without penalty","deadline"],
+["2026-10-12","2026-10-12","Thanksgiving (no classes)","holiday"],
+["2026-10-13","2026-10-18","Reading days (no classes)","holiday"],
+["2026-11-02","2026-11-02","Fall graduation","term"],
+["2026-11-18","2026-11-18","Final day to drop a Fall course","deadline"],
+["2026-12-04","2026-12-04","Spring graduation early application deadline","deadline"],
+["2026-12-09","2026-12-09","Last day of Fall classes","term"],
+["2026-12-10","2026-12-10","Reading day (no classes)","holiday"],
+["2026-12-11","2026-12-11","Winter registration deadline","deadline"],
+["2026-12-11","2026-12-18","Fall final exams","exam"],
+["2026-12-24","2027-01-03","Tyndale closed","holiday"],
+["2027-01-04","2027-01-08","January intersession","term"],
+["2027-01-07","2027-01-07","First day of modular classes","term"],
+["2027-01-11","2027-01-11","Winter classes begin","term"],
+["2027-01-22","2027-01-22","Last day to add/drop Winter courses without penalty","deadline"],
+["2027-01-31","2027-01-31","Spring graduation final application deadline","deadline"],
+["2027-02-15","2027-02-15","Family Day (no classes)","holiday"],
+["2027-02-16","2027-02-21","Reading days (no classes)","holiday"],
+["2027-03-19","2027-03-19","Final day to drop a Winter course","deadline"],
+["2027-03-26","2027-03-26","Good Friday (no classes or exams)","holiday"],
+["2027-04-06","2027-04-06","Convocation Chapel","term"],
+["2027-04-12","2027-04-12","Last day of Winter classes","term"],
+["2027-04-13","2027-04-13","Reading day (no classes)","holiday"],
+["2027-04-14","2027-04-22","Winter final exams","exam"],
+["2027-05-29","2027-05-29","Spring Convocation, Arts & Sciences","term"],
+];
+const TERMS = [
+{id:"F26", name:"Fall 2026", start:"2026-09-10", end:"2026-12-09"},
+{id:"W27", name:"Winter 2027", start:"2027-01-11", end:"2027-04-12"},
+];
+
+</script>
+<script>
+(function(){
+"use strict";
+// ---------- catalog
+const CAT = new Map(CATALOG.map(([c,t])=>[c,t]));
+const cr = c => CREDIT_OVERRIDES[c] ?? 3;
+const lvl = c => { const m = /^[A-Z]{4} (\d)/.exec(c); return m ? +m[1] : 0; };
+const title = c => CAT.get(c) || "Title not in the online catalog";
+const shown = c => c.replace(/-[A-Z]{3}$/,"");
+const regCode = c => /^[A-Z]{4} \d{3}$/.test(c) ? c.replace(" ","") + cr(c) : "";
+const esc = s => String(s).replace(/[&<>"']/g, ch => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[ch]));
+const PROG = new Map(PROGRAMS.map(p=>[p.id,p]));
+const MIN = new Map(MINORS.map(m=>[m.id,m]));
+const CONC = new Map(CONCENTRATIONS.map(c=>[c.id,c]));
+const STATUS = {"":"Not started", p:"Planned", i:"In progress", d:"Done"};
+const NEXT = {"":"p", p:"i", i:"d", d:""};
+
+// ---------- state
+const blank = () => ({v:1, name:"", program:"", minor:"", conc:"", status:{}, choice:{}, classes:[], events:[], updated:0});
+let S = blank();
+let ui = {tab:"degree", q:"", subj:"", filter:"", month:null, sel:null, showAll:{}, openSettings:false, confirmReset:false, err:""};
+try{ const t = localStorage.getItem("tdt-tab"); if(t) ui.tab = t; }catch(e){}
+const LKEY = "tdt-state-v1";
+function loadLocal(){ try{ const j = localStorage.getItem(LKEY); return j ? JSON.parse(j) : null; }catch(e){ return null; } }
+function saveLocal(){ try{ localStorage.setItem(LKEY, JSON.stringify(S)); }catch(e){} }
+
+// ---------- persistence (db per user, private subtree)
+let mode = "loading", ref = null, saving = false, dirty = false, timer = null, readOnly = false;
+function setSync(s, text){ const el = document.getElementById("sync"); el.dataset.s = s; el.lastElementChild.textContent = text; }
+function changed(){
+  S.updated = Date.now(); saveLocal(); render();
+  if(mode !== "cloud") return;
+  dirty = true; setSync("saving","Saving…");
+  clearTimeout(timer); timer = setTimeout(flush, 600);
+}
+async function flush(){
+  if(saving || !dirty || !ref) return;
+  saving = true; dirty = false;
+  try{ await ref.set({json: JSON.stringify(S), updated: S.updated}); setSync("saved","Saved to your account"); }
+  catch(e){
+    if(e && e.code === "invalid_argument"){ mode = "local"; readOnly = true; setSync("local","Not saving"); render(); }
+    else if(e && e.code === "unavailable"){ dirty = true; setTimeout(flush, 1500 + Math.random()*1500); setSync("saving","Retrying…"); }
+    else { dirty = true; setSync("local","Couldn’t save"); }
+  }
+  saving = false;
+  if(dirty) flush();
+}
+async function connect(){
+  const local = loadLocal(); if(local) S = Object.assign(blank(), local);
+  render();
+  const api = window.claude && window.claude.use ? window.claude : null;
+  let db = null, user = null, uid = null;
+  if(api){ try{ [db, user] = await Promise.all([api.use("db"), api.use("user")]); }catch(e){} }
+  if(user){ try{ uid = await user.id(); }catch(e){} }
+  if(!db || !uid){ mode = "local"; setSync("local","This device only"); render(); return; }
+  let lastUid = null; try{ lastUid = localStorage.getItem("tdt-uid"); localStorage.setItem("tdt-uid", uid); }catch(e){}
+  if(lastUid && lastUid !== uid){ S = blank(); saveLocal(); render(); }
+  ref = db.doc("data/users/" + uid + "/profile");
+  let first = true;
+  ref.onSnapshot(snap => {
+    if(snap.metadata.hasPendingWrites) return;
+    if(snap.exists){
+      const d = snap.data();
+      const remoteU = (d && d.updated) || 0;
+      if(d && typeof d.json === "string" && remoteU > (S.updated||0) && !dirty){
+        try{ S = Object.assign(blank(), JSON.parse(d.json)); saveLocal(); render(); }catch(e){}
+      } else if(first && (S.updated||0) > remoteU && S.program){ dirty = true; flush(); }
+      if(first){ mode = "cloud"; setSync("saved","Saved to your account"); render(); }
+    } else if(first){
+      mode = "cloud"; setSync("saved","Saved to your account");
+      if(S.program){ dirty = true; flush(); }
+      render();
+    }
+    first = false;
+  }, err => { mode = "local"; setSync("local","This device only"); render(); });
+}
+
+// ---------- requirement logic
+function rowCodes(row){ return typeof row === "string" ? [row] : (row.of || row.pool || []); }
+function effChoice(row, key){
+  const explicit = (S.choice[key] || []).slice();
+  if(row.el) return explicit;
+  const opts = row.of || row.pool || [];
+  const cap = row.pick || Infinity;
+  for(const o of opts){ if(explicit.length >= cap) break; if(S.status[o] && !explicit.includes(o)) explicit.push(o); }
+  return explicit.filter(c => opts.includes(c)).slice(0, cap);
+}
+function rowCourses(row, key){ if(typeof row === "string") return [row]; if(row.free) return []; return effChoice(row, key); }
+function rowTarget(row){ if(typeof row === "string") return cr(row); if(row.free) return row.free; if(row.el) return row.cr; if(row.pick) return row.cr || row.pick*3; return row.cr || 0; }
+function sections(){
+  const out = [];
+  const p = PROG.get(S.program); if(!p) return out;
+  out.push({kind:"Major", key:p.id, title:p.cred + " " + p.name, pdf:p.pdf, blocks:p.blocks.map(b=>({t:b[0], cr:b[1], rows:b[2]})), notes:p.notes||[], year:p.sheetYear});
+  const c = CONC.get(S.conc); if(c && (p.conc||[]).includes(c.id)) out.push({kind:"Concentration", key:c.id, title:c.name + " concentration", pdf:c.pdf, blocks:[{t:"Concentration requirements", cr:c.total, rows:c.rows}], notes:c.note?[c.note]:[]});
+  const m = MIN.get(S.minor); if(m) out.push({kind:"Minor", key:m.id, title:m.name + " minor", pdf:m.pdf, blocks:[{t:"Minor requirements", cr:m.total, rows:m.rows}], notes:m.note?[m.note]:[]});
+  return out;
+}
+function compute(){
+  const secs = sections();
+  const used = new Set();
+  secs.forEach(s => s.blocks.forEach((b,bi) => b.rows.forEach((r,ri) => rowCourses(r, s.key+":"+bi+":"+ri).forEach(c=>used.add(c)))));
+  const all = Object.keys(S.status).filter(c => S.status[c]);
+  const sum = st => all.filter(c=>S.status[c]===st).reduce((a,c)=>a+cr(c),0);
+  const leftoverDone = all.filter(c=>S.status[c]==="d" && !used.has(c));
+  const leftoverAny = all.filter(c=>!used.has(c));
+  let freePool = leftoverDone.reduce((a,c)=>a+cr(c),0);
+  const freeFill = {};
+  secs.forEach(s => s.blocks.forEach((b,bi) => b.rows.forEach((r,ri) => { if(r.free){ const k=s.key+":"+bi+":"+ri; const take=Math.min(r.free, freePool); freeFill[k]=take; freePool-=take; } })));
+  return {secs, done:sum("d"), prog:sum("i"), plan:sum("p"), upper: all.filter(c=>S.status[c]==="d" && lvl(c)>=3).reduce((a,c)=>a+cr(c),0), leftoverAny, freeFill};
+}
+function blockDone(s, b, bi, C){
+  let n = 0;
+  b.rows.forEach((r,ri) => {
+    const k = s.key+":"+bi+":"+ri;
+    if(r.free){ n += C.freeFill[k]||0; return; }
+    let got = rowCourses(r,k).filter(c=>S.status[c]==="d").reduce((a,c)=>a+cr(c),0);
+    if(r.el || r.pick || r.cr) got = Math.min(got, rowTarget(r));
+    n += got;
+  });
+  return Math.min(n, b.cr);
+}
+
+// ---------- render helpers
+function pill(code){ const s = S.status[code]||""; return `<button class="pill" data-act="cycle" data-code="${esc(code)}" data-s="${s}" aria-label="${esc(shown(code))}: ${STATUS[s]}. Change status">${STATUS[s]}</button>`; }
+function courseLine(code, rm){
+  return `<div class="course">${pill(code)}<div class="ct"><span class="code">${esc(shown(code))}</span> <span class="title">${esc(title(code))}</span></div><span class="crs">${cr(code)} cr${rm?`<button class="x" title="Remove" aria-label="Remove ${esc(shown(code))}" data-act="unchoose" data-key="${rm}" data-code="${esc(code)}">×</button>`:""}</span></div>`;
+}
+function chip(code, key, act){ return `<button class="chip" data-act="${act||"choose"}" data-key="${key}" data-code="${esc(code)}" title="${esc(title(code))}">${esc(shown(code))}<em>${esc(title(code))}</em></button>`; }
+function rowHTML(s, r, key, C){
+  if(typeof r === "string") return `<div class="row">${courseLine(r)}</div>`;
+  if(r.free){
+    const fill = C.freeFill[key]||0;
+    const list = C.leftoverAny;
+    return `<div class="row"><div class="freebar"><div class="mini" style="width:120px"><div style="width:${Math.round(fill/r.free*100)}%"></div></div><span><b style="color:var(--fg)">${fill}</b> of ${r.free} cr. Filled automatically by courses you mark that don’t count elsewhere.</span></div>${list.length?`<div class="freelist">${list.map(c=>`<span class="tag" title="${esc(title(c))} · ${STATUS[S.status[c]]}">${esc(shown(c))}</span>`).join("")}</div>`:`<span class="faint" style="font-size:13px">Add courses from the Courses tab to fill this.</span>`}</div>`;
+  }
+  const chosen = effChoice(r, key);
+  if(r.el){
+    const slots = Math.max(1, Math.ceil(r.cr/3));
+    const empty = Math.max(0, slots - chosen.length);
+    let h = `<div class="row"><div class="row-label">${esc(r.el)} <span class="count">· ${r.cr} cr</span>${r.hint?`<span class="faint">· ${esc(r.hint)}</span>`:""}</div>`;
+    h += chosen.map(c=>courseLine(c, key)).join("");
+    for(let i=0;i<empty;i++) h += `<div class="slot"><input list="allc" id="slot-${key}-${i}" placeholder="Add a course, e.g. ${esc(suggest(r))}" data-act="slot" data-key="${key}" autocomplete="off" aria-label="Add a course for ${esc(r.el)}"></div>`;
+    return h + `</div>`;
+  }
+  const isPick = !!r.pick;
+  const label = r.label || (isPick ? `Choose ${r.pick===1?"one":r.pick}` : "Choose from");
+  const full = isPick && chosen.length >= r.pick;
+  const show = !full || ui.showAll[key];
+  const opts = rowCodes(r).filter(c=>!chosen.includes(c));
+  let h = `<div class="row"><div class="row-label">${esc(label)} <span class="count">· ${isPick? chosen.length+" of "+r.pick+" chosen" : rowTarget(r)? rowTarget(r)+" cr" : "counts toward block"}</span>${full?`<button class="linkbtn" data-act="toggleopts" data-key="${key}">${ui.showAll[key]?"Hide options":"Change"}</button>`:""}</div>`;
+  h += chosen.map(c=>courseLine(c, (S.choice[key]||[]).includes(c)?key:"")).join("");
+  if(show && opts.length) h += `<div class="chips">${opts.map(c=>chip(c,key)).join("")}</div>`;
+  return h + `</div>`;
+}
+function suggest(r){ const m = /([A-Z]{4})/.exec(r.el + " " + (r.hint||"")); return m ? m[1]+" 3xx" : "PSYC 101"; }
+
+function renderDegree(){
+  const p = PROG.get(S.program);
+  if(!p) return `<div class="empty" style="margin-top:40px">Choose your program to see your requirements. <button class="btn" data-act="settings" style="margin-left:8px">Choose program</button></div>`;
+  const C = compute();
+  const tot = p.total, pct = v => Math.min(100, v/tot*100);
+  const m = MIN.get(S.minor);
+  let h = `<section class="summary">
+    <div><div class="eyebrow">${esc(S.name ? S.name + "’s degree" : "Your degree")}</div><h1>${esc(p.cred)} in ${esc(p.name)}</h1>
+    <div class="sub"><span>${m?esc(m.name)+" minor":"No minor"}</span>${CONC.get(S.conc)&&(p.conc||[]).includes(S.conc)?`<span>${esc(CONC.get(S.conc).name)} concentration</span>`:""}<span>Min. GPA ${esc(p.gpa)}</span><span>${p.sheetYear?esc(p.sheetYear):"2026–27"} program sheet</span></div></div>
+    <div class="bignum"><b>${C.done}</b><span> / ${tot} credit hours</span></div>
+    <div class="meter"><div class="track" role="img" aria-label="${C.done} done, ${C.prog} in progress, ${C.plan} planned of ${tot}"><div style="width:${pct(C.done)}%;background:var(--done)"></div><div style="width:${Math.min(pct(C.prog),100-pct(C.done))}%;background:var(--prog)"></div><div style="width:${Math.max(0,Math.min(pct(C.plan),100-pct(C.done)-pct(C.prog)))}%;background:var(--plan);opacity:.7"></div></div>
+    <div class="legend"><span><i class="sw" style="background:var(--done)"></i><b>${C.done}</b> done</span><span><i class="sw" style="background:var(--prog)"></i><b>${C.prog}</b> in progress</span><span><i class="sw" style="background:var(--plan)"></i><b>${C.plan}</b> planned</span><span><b>${Math.max(0,tot-C.done-C.prog-C.plan)}</b> still to plan</span></div></div>
+    <div class="stats">
+      <div class="stat"><div class="k">Upper-level (3000/4000)</div><div class="v">${C.upper} <small>/ ${tot>=120?45:24} needed</small></div></div>
+      <div class="stat"><div class="k">Courses done</div><div class="v">${Object.values(S.status).filter(x=>x==="d").length} <small>courses</small></div></div>
+      <div class="stat"><div class="k">Requirement blocks met</div><div class="v">${C.secs.reduce((a,s)=>a+s.blocks.filter((b,bi)=>blockDone(s,b,bi,C)>=b.cr).length,0)} <small>/ ${C.secs.reduce((a,s)=>a+s.blocks.length,0)}</small></div></div>
+    </div></section>`;
+  if(readOnly) h += `<div class="notice">You can look around, but changes won’t be saved here. Ask the owner of this page to give you Contributor access so it can save to your account.</div>`;
+  else if(mode === "local") h += `<div class="notice">Your progress is saving on this device only. Open this page inside Claude while signed in to keep it in your account on every device.</div>`;
+  C.secs.forEach(s => {
+    h += `<div class="section-h"><span class="eyebrow">${s.kind}</span><h2>${esc(s.title)}</h2><a href="${esc(s.pdf)}" target="_blank" rel="noopener">Official sheet ↗</a></div>`;
+    s.blocks.forEach((b,bi) => {
+      const d = blockDone(s,b,bi,C);
+      h += `<div class="block"><div class="block-h"><h3>${esc(b.t)}</h3><span class="cr">${d} / ${b.cr} cr</span><div class="mini"><div style="width:${Math.round(d/b.cr*100)}%"></div></div></div><div class="rows">`;
+      let sumT = 0;
+      b.rows.forEach((r,ri)=>{ h += rowHTML(s, r, s.key+":"+bi+":"+ri, C); sumT += rowTarget(r); });
+      if(sumT && sumT < b.cr) h += `<div class="row"><span class="faint" style="font-size:13px">${b.cr-sumT} more credit hours in this block are listed on the official sheet; check it for the exact courses.</span></div>`;
+      h += `</div></div>`;
+    });
+    if(s.notes.length) h += `<ul class="notes">${s.notes.map(n=>`<li>${esc(n)}</li>`).join("")}</ul>`;
+  });
+  return h;
+}
+
+function renderCourses(){
+  const subs = [...new Set(CATALOG.map(([c])=>c.slice(0,4)))];
+  const q = ui.q.trim().toLowerCase();
+  const list = CATALOG.filter(([c,t]) => (!ui.subj || c.startsWith(ui.subj)) && (!q || c.toLowerCase().includes(q) || t.toLowerCase().includes(q) || c.replace(" ","").toLowerCase().includes(q)) && (!ui.filter || (ui.filter==="mine" ? !!S.status[c] : (S.status[c]||"")===ui.filter)));
+  const shownList = list.slice(0, 200);
+  return `<div class="toolbar">
+    <input class="field grow" id="q" type="search" placeholder="Search ${CATALOG.length} courses by code or title" value="${esc(ui.q)}" data-act="search" aria-label="Search courses">
+    <select class="field" id="subj" data-act="subj" aria-label="Subject"><option value="">All subjects</option>${subs.map(s=>`<option ${ui.subj===s?"selected":""}>${s}</option>`).join("")}</select>
+    <select class="field" id="flt" data-act="flt" aria-label="Status"><option value="">Any status</option><option value="mine" ${ui.filter==="mine"?"selected":""}>On my plan</option><option value="d" ${ui.filter==="d"?"selected":""}>Done</option><option value="i" ${ui.filter==="i"?"selected":""}>In progress</option><option value="p" ${ui.filter==="p"?"selected":""}>Planned</option></select>
+  </div>
+  <p class="muted" style="font-size:13px;margin:10px 2px 0">${list.length} course${list.length===1?"":"s"}${list.length>200?" · showing the first 200":""}. Tap a status to add a course to your plan; it counts toward any requirement it fits, otherwise toward your electives.</p>
+  <div class="cat">${shownList.length?shownList.map(([c])=>`<div class="course">${pill(c)}<div class="ct"><span class="code">${esc(shown(c))}</span> <span class="title">${esc(title(c))}</span></div><span class="crs">${cr(c)} cr${regCode(c)?` <span class="regc" title="How it appears in the timetable">${regCode(c)}</span>`:""}</span></div>`).join(""):`<div class="empty">No courses match. Try a code like “MEDA” or a word like “film”.</div>`}</div>`;
+}
+
+// ---------- calendar
+const pad = n => String(n).padStart(2,"0");
+const ymd = d => d.getFullYear()+"-"+pad(d.getMonth()+1)+"-"+pad(d.getDate());
+const parseD = s => { const [y,m,d] = s.split("-").map(Number); return new Date(y,m-1,d); };
+const NOCLASS = new Set();
+TYNDALE_DATES.forEach(([a,b,,t]) => { if(t!=="holiday") return; for(let d=parseD(a); d<=parseD(b); d.setDate(d.getDate()+1)) NOCLASS.add(ymd(d)); });
+const DOW = ["Sun","Mon","Tue","Wed","Thu","Fri","Sat"];
+function fmtTime(t){ if(!t) return ""; const [h,m] = t.split(":").map(Number); return ((h%12)||12)+":"+pad(m)+(h<12?" am":" pm"); }
+function itemsOn(ds){
+  const out = [];
+  TYNDALE_DATES.forEach(([a,b,n,t]) => { if(ds>=a && ds<=b) out.push({kind:t, text:n, time:""}); });
+  const d = parseD(ds), w = d.getDay();
+  S.classes.forEach(c => { const term = TERMS.find(t=>t.id===c.term); if(!term) return; if(ds>=term.start && ds<=term.end && c.days.includes(w) && !NOCLASS.has(ds)) out.push({kind:"cls", text:shown(c.code)+(c.room?" · "+c.room:""), time:c.start, end:c.end, sub:title(c.code)}); });
+  S.events.forEach(e => { if(e.date===ds) out.push({kind:"mine", text:e.title, time:e.time||""}); });
+  return out.sort((a,b)=>(a.time||"00:00").localeCompare(b.time||"00:00"));
+}
+function nextUp(){
+  const now = new Date();
+  for(let i=0;i<240;i++){
+    const d = new Date(now.getFullYear(), now.getMonth(), now.getDate()+i), ds = ymd(d);
+    const items = itemsOn(ds).filter(x=>x.kind==="cls"||x.kind==="mine"||x.kind==="deadline"||x.kind==="exam"||x.kind==="term");
+    for(const it of items){
+      const [h,m] = (it.time||"09:00").split(":").map(Number);
+      const at = new Date(d.getFullYear(), d.getMonth(), d.getDate(), h, m);
+      if(at > now) return {it, at};
+    }
+  }
+  return null;
+}
+function countdown(at){
+  let s = Math.max(0, Math.floor((at - new Date())/1000));
+  const d = Math.floor(s/86400); s%=86400; const h = Math.floor(s/3600); s%=3600; const m = Math.floor(s/60); s%=60;
+  return (d?d+"d ":"")+pad(h)+"h "+pad(m)+"m "+pad(s)+"s";
+}
+function termProgress(){
+  const now = ymd(new Date());
+  const t = TERMS.find(t=>now<=t.end) || TERMS[TERMS.length-1];
+  const s = parseD(t.start), e = parseD(t.end), n = new Date();
+  const pct = Math.max(0, Math.min(100, (n-s)/(e-s)*100));
+  const days = Math.ceil((e - n)/86400000);
+  const label = n < s ? `Starts in ${Math.ceil((s-n)/86400000)} days` : days >= 0 ? `${days} days of classes left` : "Finished";
+  return {t, pct, label};
+}
+function renderCal(){
+  const today = new Date(); const tds = ymd(today);
+  if(!ui.month) ui.month = [today.getFullYear(), today.getMonth()];
+  const [Y,M] = ui.month;
+  const first = new Date(Y,M,1), start = new Date(Y,M,1-first.getDay());
+  const nu = nextUp(), tp = termProgress();
+  let h = `<div class="cal-top"><div class="next"><span class="eyebrow">Next up</span>${nu?`<div class="what">${esc(nu.it.text)}</div><div class="count-down" id="cd" data-at="${nu.at.getTime()}">${countdown(nu.at)}</div><div class="when">${DOW[nu.at.getDay()]} ${nu.at.toLocaleDateString(undefined,{month:"short",day:"numeric"})}${nu.it.time?" · "+fmtTime(nu.it.time):""}${nu.it.sub?" · "+esc(nu.it.sub):""}</div>`:`<div class="what">Nothing coming up</div><div class="when">Add your class times below to see a live countdown.</div>`}</div>
+    <div class="termcard"><span class="eyebrow">${esc(tp.t.name)}</span><div style="font-weight:700;font-size:17px">${tp.label}</div><div class="track"><div style="width:${tp.pct}%;background:var(--accent)"></div></div><div class="muted" style="font-size:13px">${parseD(tp.t.start).toLocaleDateString(undefined,{month:"short",day:"numeric"})} – ${parseD(tp.t.end).toLocaleDateString(undefined,{month:"short",day:"numeric",year:"numeric"})} · exams follow</div></div></div>`;
+  h += `<div class="month"><div class="month-h"><h3>${first.toLocaleDateString(undefined,{month:"long",year:"numeric"})}</h3><button class="iconbtn" data-act="mprev" aria-label="Previous month">‹</button><button class="iconbtn" data-act="mtoday">Today</button><button class="iconbtn" data-act="mnext" aria-label="Next month">›</button></div><div class="grid7">${DOW.map(d=>`<div class="dow">${d}</div>`).join("")}`;
+  for(let i=0;i<42;i++){
+    const d = new Date(start.getFullYear(), start.getMonth(), start.getDate()+i), ds = ymd(d);
+    if(i>=35 && d.getMonth()!==M) break;
+    const its = itemsOn(ds);
+    h += `<button class="day${d.getMonth()!==M?" out":""}${ds===tds?" today":""}${ui.sel===ds?" sel":""}" data-act="pick" data-d="${ds}" aria-label="${d.toDateString()}, ${its.length} items"><span class="dn">${d.getDate()}</span>${its.slice(0,3).map(x=>`<span class="ev ${x.kind}">${x.time?fmtTime(x.time).replace(":00","")+" ":""}${esc(x.text)}</span>`).join("")}${its.length>3?`<span class="more">+${its.length-3} more</span>`:""}</button>`;
+  }
+  h += `</div></div>`;
+  const sel = ui.sel || tds; const sits = itemsOn(sel);
+  h += `<div class="daypanel"><h3>${parseD(sel).toLocaleDateString(undefined,{weekday:"long",month:"long",day:"numeric"})}</h3>${sits.length?`<div class="ag">${sits.map(x=>`<div class="ag-i"><span class="t">${x.time?fmtTime(x.time)+(x.end?"–"+fmtTime(x.end):""):"All day"}</span><span>${esc(x.text)}${x.sub?`<small class="muted" style="display:block;font-size:12.5px">${esc(x.sub)}</small>`:""}</span><span class="ev ${x.kind}" style="font-size:11px">${{cls:"Class",mine:"Mine",holiday:"No classes",exam:"Exams",deadline:"Deadline",term:"Tyndale"}[x.kind]}</span></div>`).join("")}</div>`:`<p class="muted" style="margin:0;font-size:14px">Nothing on this day.</p>`}</div>`;
+  const opts = CATALOG.map(([c,t])=>`<option value="${esc(shown(c))} — ${esc(t)}"></option>`).join("");
+  h += `<div class="two">
+    <div class="panel"><h3>My class times</h3><p class="muted" style="margin:0;font-size:13px">Classes repeat weekly through the term and skip Tyndale holidays and reading days.</p>
+      <div>${S.classes.length?S.classes.map(c=>`<div class="li"><span><b class="mono">${esc(shown(c.code))}</b> ${c.days.map(d=>DOW[d]).join(", ")} · ${fmtTime(c.start)}–${fmtTime(c.end)}<small>${esc(title(c.code))} · ${esc((TERMS.find(t=>t.id===c.term)||{}).name||"")}${c.room?" · "+esc(c.room):""}</small></span><button class="x" data-act="delclass" data-id="${c.id}" aria-label="Remove class">×</button></div>`).join(""):`<p class="faint" style="margin:0;font-size:13px">No classes yet.</p>`}</div>
+      <form class="form" id="classForm" data-act="addclass">
+        <label class="full">Course<input class="field" id="cf-code" list="allc" placeholder="e.g. MEDA 113" autocomplete="off" required></label>
+        <div class="full days" role="group" aria-label="Days">${[1,2,3,4,5].map(d=>`<label><input type="checkbox" id="cf-d${d}" value="${d}"><span>${DOW[d]}</span></label>`).join("")}</div>
+        <label>Starts<input class="field" type="time" id="cf-start" value="10:00" required></label>
+        <label>Ends<input class="field" type="time" id="cf-end" value="11:20" required></label>
+        <label>Term<select class="field" id="cf-term">${TERMS.map(t=>`<option value="${t.id}">${t.name}</option>`).join("")}</select></label>
+        <label>Room (optional)<input class="field" id="cf-room" placeholder="e.g. A104"></label>
+        ${ui.err?`<span class="err full">${esc(ui.err)}</span>`:""}
+        <div class="full"><button class="btn" type="submit">Add class</button></div>
+      </form></div>
+    <div class="panel"><h3>My dates</h3><p class="muted" style="margin:0;font-size:13px">Assignments, games, anything you want on the calendar.</p>
+      <div>${S.events.length?S.events.slice().sort((a,b)=>(a.date+(a.time||"")).localeCompare(b.date+(b.time||""))).map(e=>`<div class="li"><span>${esc(e.title)}<small>${parseD(e.date).toLocaleDateString(undefined,{weekday:"short",month:"short",day:"numeric"})}${e.time?" · "+fmtTime(e.time):""}</small></span><button class="x" data-act="delevent" data-id="${e.id}" aria-label="Remove date">×</button></div>`).join(""):`<p class="faint" style="margin:0;font-size:13px">No dates yet.</p>`}</div>
+      <form class="form" id="eventForm" data-act="addevent">
+        <label class="full">What<input class="field" id="ef-title" placeholder="e.g. BSTH 102 essay due" required></label>
+        <label>Date<input class="field" type="date" id="ef-date" value="${esc(ui.sel||tds)}" required></label>
+        <label>Time (optional)<input class="field" type="time" id="ef-time"></label>
+        <div class="full"><button class="btn" type="submit">Add date</button></div>
+      </form></div></div>`;
+  return h;
+}
+
+function renderModal(){
+  const el = document.getElementById("modal");
+  const need = mode !== "loading" && !S.program;
+  if(!(ui.openSettings || need)){ el.innerHTML = ""; return; }
+  const groups = [...new Set(PROGRAMS.map(p=>p.group))];
+  const p = PROG.get(S.program);
+  const concs = p && p.conc ? p.conc.map(id=>CONC.get(id)) : [];
+  const acct = mode==="cloud" ? `Your tracker is tied to your <b>Claude account</b>. Open this page on any device while signed in and your progress is there. No separate password needed.` : `Saving on <b>this device only</b> right now. Open this page in Claude while signed in to keep it in your account.`;
+  el.innerHTML = `<div class="scrim" role="dialog" aria-modal="true" aria-labelledby="mh"><form class="modal" id="setupForm" data-act="setup">
+    <h2 id="mh">${need?"Set up your tracker":"Settings"}</h2>
+    ${need?`<p>Pick your program and your requirements load automatically from Tyndale’s 2026–27 program sheets.</p>`:""}
+    <div class="acct">${acct}</div>
+    <label>Your first name<input class="field" id="sf-name" value="${esc(S.name)}" placeholder="Optional" autocomplete="given-name"></label>
+    <label>Degree program<select class="field" id="sf-prog" required><option value="">Choose your program…</option>${groups.map(g=>`<optgroup label="${esc(g)}">${PROGRAMS.filter(x=>x.group===g).map(x=>`<option value="${x.id}" ${S.program===x.id?"selected":""}>${esc(x.name)}${x.cred.includes("Honours")&&!x.name.includes("Honours")?" (Honours)":""}</option>`).join("")}</optgroup>`).join("")}</select></label>
+    <label>Minor<select class="field" id="sf-minor"><option value="">No minor</option>${MINORS.map(m=>`<option value="${m.id}" ${S.minor===m.id?"selected":""}>${esc(m.name)} (${m.total} cr)</option>`).join("")}</select></label>
+    <label id="sf-conc-wrap" ${concs.length?"":"hidden"}>Concentration<select class="field" id="sf-conc"><option value="">None</option>${concs.map(c=>`<option value="${c.id}" ${S.conc===c.id?"selected":""}>${esc(c.name)}</option>`).join("")}</select></label>
+    ${!need?(ui.confirmReset?`<div class="acct" style="background:var(--hol-soft)"><span>Erase every course, class and date you’ve added? This can’t be undone.</span></div><div class="actions"><button type="button" class="btn ghost" data-act="resetno">Keep my data</button><button type="button" class="btn danger" data-act="resetyes">Erase everything</button></div>`:`<button type="button" class="linkbtn" style="align-self:flex-start;color:var(--hol)" data-act="reset">Start over…</button>`):""}
+    <div class="actions">${need?"":`<button type="button" class="btn ghost" data-act="closeset">Cancel</button>`}<button class="btn" type="submit">${need?"Start tracking":"Save"}</button></div>
+  </form></div>`;
+}
+
+let cdTimer = null;
+function render(){
+  const app = document.getElementById("app");
+  const y = window.scrollY;
+  document.querySelectorAll(".tab").forEach(t => t.setAttribute("aria-selected", String(t.dataset.tab===ui.tab)));
+  const p = PROG.get(S.program);
+  document.getElementById("who").textContent = p ? (S.name? S.name+" · " : "") + p.cred + " " + p.name : "Tyndale University · 2026–27";
+  const focusId = document.activeElement && document.activeElement.id;
+  const caret = focusId && document.activeElement.selectionStart;
+  app.innerHTML = (ui.tab==="cal" ? renderCal() : ui.tab==="courses" ? renderCourses() : renderDegree())
+    + `<datalist id="allc">${DL}</datalist>`
+    + `<footer>Unofficial student-made tool. Requirements come from Tyndale’s 2026–27 program sheets and course list on tyndale.ca, and dates from the 2026–27 Arts &amp; Sciences academic calendar. Always confirm your plan with the Registrar or your faculty advisor.</footer>`;
+  renderModal();
+  if(focusId){ const f = document.getElementById(focusId); if(f){ f.focus(); try{ if(caret!=null) f.setSelectionRange(caret,caret); }catch(e){} } }
+  window.scrollTo(0, y);
+  clearInterval(cdTimer);
+  const cd = document.getElementById("cd");
+  if(cd){ const at = new Date(+cd.dataset.at); cdTimer = setInterval(()=>{ if(at <= new Date()) render(); else cd.textContent = countdown(at); }, 1000); }
+}
+const DL = CATALOG.map(([c,t])=>`<option value="${shown(c).replace(/"/g,"")} — ${t.replace(/"/g,"'")}"></option>`).join("");
+function codeFromInput(v){
+  v = (v||"").trim(); if(!v) return null;
+  const head = v.split("—")[0].trim().toUpperCase().replace(/^([A-Z]{4})\s*(\w)/,"$1 $2");
+  const t = (v.split("—")[1]||"").trim();
+  const exact = CATALOG.find(([c,tt]) => shown(c)===head && (!t || tt===t));
+  if(exact) return exact[0];
+  const byCode = CATALOG.find(([c]) => c===head || c.replace(" ","")===head.replace(" ",""));
+  return byCode ? byCode[0] : null;
+}
+
+// ---------- events
+document.addEventListener("click", e => {
+  const b = e.target.closest("[data-act]"); if(!b) return;
+  const a = b.dataset.act;
+  if(b.classList.contains("tab")) return;
+  if(a==="cycle"){ const c = b.dataset.code; const n = NEXT[S.status[c]||""]; if(n) S.status[c]=n; else delete S.status[c]; changed(); }
+  else if(a==="choose"){ const k=b.dataset.key, c=b.dataset.code; const cur=(S.choice[k]||[]).slice(); if(!cur.includes(c)) cur.push(c); S.choice[k]=cur; if(!S.status[c]) S.status[c]="p"; ui.showAll[k]=false; changed(); }
+  else if(a==="unchoose"){ const k=b.dataset.key, c=b.dataset.code; S.choice[k]=(S.choice[k]||[]).filter(x=>x!==c); if(S.status[c]==="p") delete S.status[c]; changed(); }
+  else if(a==="toggleopts"){ ui.showAll[b.dataset.key]=!ui.showAll[b.dataset.key]; render(); }
+  else if(a==="settings"){ ui.openSettings=true; ui.confirmReset=false; render(); }
+  else if(a==="closeset"){ ui.openSettings=false; render(); }
+  else if(a==="reset"){ ui.confirmReset=true; renderModal(); }
+  else if(a==="resetno"){ ui.confirmReset=false; renderModal(); }
+  else if(a==="resetyes"){ S = Object.assign(blank(), {updated:0}); ui.openSettings=false; ui.confirmReset=false; changed(); }
+  else if(a==="mprev"||a==="mnext"){ let [y,m]=ui.month; m += a==="mnext"?1:-1; if(m<0){m=11;y--} if(m>11){m=0;y++} ui.month=[y,m]; render(); }
+  else if(a==="mtoday"){ const t=new Date(); ui.month=[t.getFullYear(),t.getMonth()]; ui.sel=ymd(t); render(); }
+  else if(a==="pick"){ ui.sel=b.dataset.d; render(); }
+  else if(a==="delclass"){ S.classes=S.classes.filter(c=>c.id!==b.dataset.id); changed(); }
+  else if(a==="delevent"){ S.events=S.events.filter(c=>c.id!==b.dataset.id); changed(); }
+});
+document.querySelector(".tabs").addEventListener("click", e => { const t = e.target.closest(".tab"); if(!t) return; ui.tab = t.dataset.tab; try{ localStorage.setItem("tdt-tab", ui.tab); }catch(err){} window.scrollTo(0,0); render(); });
+document.addEventListener("change", e => {
+  const t = e.target;
+  if(t.dataset.act==="slot"){ const c = codeFromInput(t.value); if(!c) return; const k=t.dataset.key; const cur=(S.choice[k]||[]).slice(); if(!cur.includes(c)) cur.push(c); S.choice[k]=cur; if(!S.status[c]) S.status[c]="p"; changed(); }
+  else if(t.dataset.act==="subj"){ ui.subj=t.value; render(); }
+  else if(t.dataset.act==="flt"){ ui.filter=t.value; render(); }
+  else if(t.id==="sf-prog"){ const p=PROG.get(t.value); const w=document.getElementById("sf-conc-wrap"); const s=document.getElementById("sf-conc"); const concs=p&&p.conc?p.conc.map(id=>CONC.get(id)):[]; w.hidden=!concs.length; s.innerHTML=`<option value="">None</option>`+concs.map(c=>`<option value="${c.id}">${esc(c.name)}</option>`).join(""); }
+});
+let qT = null;
+document.addEventListener("input", e => { if(e.target.dataset.act==="search"){ ui.q=e.target.value; clearTimeout(qT); qT=setTimeout(render,120); } });
+document.addEventListener("submit", e => {
+  e.preventDefault();
+  const f = e.target;
+  if(f.id==="setupForm"){
+    const prog = document.getElementById("sf-prog").value; if(!prog) return;
+    S.name = document.getElementById("sf-name").value.trim().slice(0,40);
+    S.program = prog; S.minor = document.getElementById("sf-minor").value; S.conc = document.getElementById("sf-conc").value;
+    ui.openSettings=false; changed();
+  } else if(f.id==="classForm"){
+    const code = codeFromInput(document.getElementById("cf-code").value);
+    const days = [1,2,3,4,5].filter(d=>document.getElementById("cf-d"+d).checked);
+    const start = document.getElementById("cf-start").value, end = document.getElementById("cf-end").value;
+    if(!code){ ui.err="Pick a course from the list, e.g. MEDA 113."; render(); return; }
+    if(!days.length){ ui.err="Choose at least one day."; render(); return; }
+    if(end<=start){ ui.err="End time must be after the start time."; render(); return; }
+    ui.err="";
+    S.classes.push({id:Math.random().toString(36).slice(2,9), code, days, start, end, term:document.getElementById("cf-term").value, room:document.getElementById("cf-room").value.trim().slice(0,30)});
+    if(!S.status[code]) S.status[code]="i";
+    changed();
+  } else if(f.id==="eventForm"){
+    const title = document.getElementById("ef-title").value.trim(); const date = document.getElementById("ef-date").value;
+    if(!title||!date) return;
+    S.events.push({id:Math.random().toString(36).slice(2,9), title:title.slice(0,80), date, time:document.getElementById("ef-time").value||""});
+    ui.sel = date; changed();
+  }
+});
+connect();
+})();
+</script>

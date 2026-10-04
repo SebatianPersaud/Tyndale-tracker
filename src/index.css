@@ -194,7 +194,7 @@ h1,h2,h3{text-wrap:balance;margin:0}
 .li small{display:block;color:var(--muted);font-size:12.5px}
 
 /* modal */
-.scrim{position:fixed;inset:0;background:rgba(10,12,16,.55);display:flex;align-items:flex-start;justify-content:center;padding:max(5vh,16px) 16px;z-index:50;overflow:auto}
+.scrim{position:fixed;inset:0;background:rgba(10,12,16,.55);display:flex;align-items:center;justify-content:center;padding:max(5vh,16px) 16px;z-index:50;overflow:auto}
 .modal{background:var(--surface);border:1px solid var(--line);border-radius:14px;max-width:520px;width:100%;padding:22px;box-shadow:var(--shadow);display:flex;flex-direction:column;gap:14px}
 .modal h2{font-family:var(--f-display);font-size:26px;font-weight:600;line-height:1.15}
 .modal p{margin:0;color:var(--muted);font-size:14px}

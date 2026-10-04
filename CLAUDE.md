@@ -4,6 +4,23 @@ An unofficial, free website where Tyndale University undergrads pick their degre
 
 This file is the project brief. Read it at the start of every session and keep the "Status" section at the bottom up to date.
 
+## Commands
+
+- `npm run dev` — start the Vite dev server
+- `npm run build` — typecheck (`tsc -b`) then production build
+- `npm run lint` — Oxlint
+- `npm test` — run the Vitest suite once (`npx vitest run src/lib/requirements.test.ts -t "name"` for a single test)
+- `npm run preview` — serve the production build locally
+
+## Architecture
+
+- **Requirements data** (`src/data/2026-27/`): typed, hand-ported copies of `programs.js`/`catalog.json`. `types.ts` defines the row shapes a requirement block can contain — a bare course code, `{pick, of}`, `{pool, cr}`, `{el, cr}`, or `{free}` — documented at the top of that file. `creditOverrides.ts` holds the handful of non-3-credit courses.
+- **Requirements engine** (`src/lib/requirements.ts`): pure functions over `TrackerState`, no React. `sections()` resolves a student's Major/Concentration/Minor into blocks and rows; `effChoice()`/`rowCourses()` decide which marked courses count toward a given row (explicit choices first, then auto-fill up to the row's cap); `compute()` produces the whole-tracker summary (credits done/in-progress/planned, upper-level credits, and how leftover completed courses fill `free` rows). `rowKey()` gives each row a stable id (`section:blockIndex:rowIndex`) used to key `state.choice`. Covered by `requirements.test.ts`.
+- **State & persistence**: `TrackerState` (`src/types.ts`) is the one JSON blob that gets persisted — `{v, name, program, minor, conc, status, choice, classes, events, updated}`. `useTrackerState` (`src/hooks/useTrackerState.ts`) owns it: signed-out writes go to `localStorage` only (`src/lib/storage.ts`); signed-in writes debounce (600ms) to the `tracker_state` Supabase table (`src/lib/cloudStorage.ts`) and mirror to `localStorage` as an offline cache. On first sign-in with local data but no cloud row, it sets `importPrompt` so the UI can ask before overwriting.
+- **Auth** (`src/hooks/useAuth.ts`): thin wrapper over Supabase Auth (sign up/in/out, password reset, session). Account deletion is a Supabase Edge Function (`supabase/functions/delete-account/`) because deleting the auth user needs the secret key, which never reaches the browser; the function verifies the caller's own token before deleting.
+- **UI**: `App.tsx` switches between three tabs (`DegreeTab`, `CalendarTab`, `CoursesTab`), all driven by the same `state`/`setState` pair from `useTrackerState`. `SettingsModal` holds auth + account actions and forces itself open until a program is picked.
+- **Database**: single `tracker_state` table, one row per user, RLS-scoped to `auth.uid() = user_id`. Migrations live in `supabase/migrations/`.
+
 ## Starting material (in `/reference`)
 
 - `tracker-prototype.html`: a working single-file prototype built in claude.ai. It is the source of truth for features, layout and visual design (clean, light + dark mode, Spectral / Hanken Grotesk / JetBrains Mono). Port it; don't redesign it.
@@ -114,7 +131,7 @@ Lecture recording or transcription, grades or GPA tracking, other schools, payme
 ## Status
 
 - [x] Milestone 0 — project scaffolded; all program PDFs downloaded and checked against programs.js (see reference/DATA-REVIEW.md); discrepancies fixed and committed.
-- [x] Milestone 1 — prototype ported to React/TS: Degree, Calendar and Courses tabs, localStorage save, requirement logic unit-tested (20 tests). Not yet committed.
-- [ ] Milestone 2
+- [x] Milestone 1 — prototype ported to React/TS: Degree, Calendar and Courses tabs, localStorage save, requirement logic unit-tested (20 tests).
+- [x] Milestone 2 — Supabase auth (sign up/in/out, password reset) and cloud save to `tracker_state` with local-import prompt, delete account via Edge Function, Privacy page. Verified with two test accounts: RLS isolation holds, deletion removes the auth user.
 - [ ] Milestone 3
 - [ ] Milestone 4

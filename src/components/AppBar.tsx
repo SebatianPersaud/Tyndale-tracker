@@ -13,14 +13,24 @@ export function AppBar({
   tab,
   onTabChange,
   sync,
+  signedIn,
   onOpenSettings,
 }: {
   who: string;
   tab: TabId;
   onTabChange: (tab: TabId) => void;
   sync: SyncStatus;
+  signedIn: boolean;
   onOpenSettings: () => void;
 }) {
+  const syncText =
+    sync === "saving"
+      ? "Saving…"
+      : sync === "local"
+        ? "Couldn't reach your account — saved on this device"
+        : signedIn
+          ? "Saved to your account"
+          : "Saved on this device";
   return (
     <header className="bar">
       <div className="bar-in">
@@ -43,7 +53,7 @@ export function AppBar({
         </nav>
         <span className="sync" data-s={sync}>
           <i />
-          <span>{sync === "saving" ? "Saving…" : "Saved on this device"}</span>
+          <span>{syncText}</span>
         </span>
         <button className="iconbtn" onClick={onOpenSettings}>
           Settings

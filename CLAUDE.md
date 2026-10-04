@@ -114,7 +114,7 @@ Lecture recording or transcription, grades or GPA tracking, other schools, payme
 ## Status
 
 - [x] Milestone 0 — project scaffolded; all program PDFs downloaded and checked against programs.js (see reference/DATA-REVIEW.md); discrepancies fixed and committed.
-- [ ] Milestone 1
+- [x] Milestone 1 — prototype ported to React/TS: Degree, Calendar and Courses tabs, localStorage save, requirement logic unit-tested (20 tests). Not yet committed.
 - [ ] Milestone 2
 - [ ] Milestone 3
 - [ ] Milestone 4

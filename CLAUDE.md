@@ -113,7 +113,7 @@ Lecture recording or transcription, grades or GPA tracking, other schools, payme
 
 ## Status
 
-- [ ] Milestone 0
+- [x] Milestone 0 — project scaffolded; all program PDFs downloaded and checked against programs.js (see reference/DATA-REVIEW.md); discrepancies fixed and committed.
 - [ ] Milestone 1
 - [ ] Milestone 2
 - [ ] Milestone 3

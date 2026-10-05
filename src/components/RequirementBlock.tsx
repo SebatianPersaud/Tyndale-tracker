@@ -11,6 +11,7 @@ export function RequirementBlock({
   onCycle,
   onChoose,
   onUnchoose,
+  onAddElective,
   showAll,
   onToggleShowAll,
 }: {
@@ -22,6 +23,7 @@ export function RequirementBlock({
   onCycle: (code: string) => void;
   onChoose: (key: string, code: string) => void;
   onUnchoose: (key: string, code: string) => void;
+  onAddElective: (code: string) => void;
   showAll: Record<string, boolean>;
   onToggleShowAll: (key: string) => void;
 }) {
@@ -51,6 +53,7 @@ export function RequirementBlock({
               onCycle={onCycle}
               onChoose={onChoose}
               onUnchoose={onUnchoose}
+              onAddElective={onAddElective}
               showAll={!!showAll[k]}
               onToggleShowAll={() => onToggleShowAll(k)}
             />

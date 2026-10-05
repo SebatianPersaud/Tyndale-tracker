@@ -43,6 +43,12 @@ export function DegreeTab({
       return next;
     });
 
+  // Marking a course "planned" (if it's not already tracked) is enough to make it show up
+  // as a leftover course — the free-elective row's fill is computed from leftovers, not from
+  // an explicit per-row claim the way {el} slots work.
+  const onAddElective = (code: string) =>
+    setState((prev) => (prev.status[code] ? prev : { ...prev, status: { ...prev.status, [code]: "p" as const } }));
+
   const onChoose = (key: string, code: string) =>
     setState((prev) => {
       const cur = (prev.choice[key] ?? []).slice();
@@ -164,6 +170,7 @@ export function DegreeTab({
               onCycle={onCycle}
               onChoose={handleChoose}
               onUnchoose={onUnchoose}
+              onAddElective={onAddElective}
               showAll={showAll}
               onToggleShowAll={(k) => setShowAll((sa) => ({ ...sa, [k]: !sa[k] }))}
             />

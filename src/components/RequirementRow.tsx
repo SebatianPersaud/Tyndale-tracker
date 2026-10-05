@@ -15,6 +15,7 @@ export function RequirementRow({
   onCycle,
   onChoose,
   onUnchoose,
+  onAddElective,
   showAll,
   onToggleShowAll,
 }: {
@@ -25,6 +26,7 @@ export function RequirementRow({
   onCycle: (code: string) => void;
   onChoose: (key: string, code: string) => void;
   onUnchoose: (key: string, code: string) => void;
+  onAddElective: (code: string) => void;
   showAll: boolean;
   onToggleShowAll: () => void;
 }) {
@@ -50,7 +52,7 @@ export function RequirementRow({
             that don't count elsewhere.
           </span>
         </div>
-        {list.length ? (
+        {list.length > 0 && (
           <div className="freelist">
             {list.map((c) => (
               <span key={c} className="tag" title={`${title(c)} · ${state.status[c] || "Not started"}`}>
@@ -58,11 +60,12 @@ export function RequirementRow({
               </span>
             ))}
           </div>
-        ) : (
-          <span className="faint" style={{ fontSize: 13 }}>
-            Add courses from the Courses tab to fill this.
-          </span>
         )}
+        <SlotInput
+          placeholder="Add a course, e.g. PSYC 101"
+          ariaLabel="Add a course to your electives"
+          onPick={onAddElective}
+        />
       </div>
     );
   }

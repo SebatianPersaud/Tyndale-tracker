@@ -10,11 +10,13 @@ export interface PickRow {
   of: string[];
   label?: string;
   cr?: number; // rare: overrides the default pick*3 credit target
+  oneTrack?: boolean; // once any option is chosen, only its subject (e.g. GREE/HEBR) stays offered
 }
 export interface PoolRow {
   pool: string[];
   label: string;
   cr: number;
+  oneTrack?: boolean; // once any option is chosen, only its subject (e.g. GREE/HEBR) stays offered
 }
 export interface ElRow {
   el: string;

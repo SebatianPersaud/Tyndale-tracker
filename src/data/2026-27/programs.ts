@@ -97,7 +97,8 @@ export const PROGRAMS: Program[] = [
               "HEBR 202"
             ],
             "label": "Greek or Hebrew, two courses in one language",
-            "cr": 6
+            "cr": 6,
+            "oneTrack": true
           }
         ]
       ],
@@ -332,7 +333,8 @@ export const PROGRAMS: Program[] = [
               "HEBR 202"
             ],
             "label": "Greek or Hebrew, two courses in one language",
-            "cr": 6
+            "cr": 6,
+            "oneTrack": true
           }
         ]
       ],
@@ -453,7 +455,8 @@ export const PROGRAMS: Program[] = [
               "HEBR 202"
             ],
             "label": "Greek or Hebrew, two courses in one language",
-            "cr": 6
+            "cr": 6,
+            "oneTrack": true
           }
         ]
       ],
@@ -854,7 +857,8 @@ export const PROGRAMS: Program[] = [
               "HEBR 202"
             ],
             "label": "Greek or Hebrew, two courses in one language",
-            "cr": 6
+            "cr": 6,
+            "oneTrack": true
           },
           {
             "el": "BSTH/CHRI courses, PHIL 294, PSYC 211 or 212",

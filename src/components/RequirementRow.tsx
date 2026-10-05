@@ -100,7 +100,13 @@ export function RequirementRow({
   const label = row.label ?? (isPick ? `Choose ${row.pick === 1 ? "one" : row.pick}` : "Choose from");
   const full = isPick && chosen.length >= row.pick;
   const show = !full || showAll;
-  const opts = rowCodes(row).filter((c) => !chosen.includes(c));
+  const subject = (code: string) => code.split(" ")[0];
+  let opts = rowCodes(row).filter((c) => !chosen.includes(c));
+  // Once a one-track row (e.g. "Greek or Hebrew") has a pick, stop offering the other subject —
+  // picking into both isn't a real option, so there's nothing to show "Change" into either.
+  if ("oneTrack" in row && row.oneTrack && chosen.length > 0) {
+    opts = opts.filter((c) => subject(c) === subject(chosen[0]));
+  }
 
   return (
     <div className="row">

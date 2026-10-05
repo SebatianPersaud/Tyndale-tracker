@@ -24,7 +24,7 @@ const BST_MAJOR = (extraBST, fourK, lang) => [
   {el:"BSTH 4000-level (not BSTH 450)", cr:fourK},
   "HIST 251","HIST 252", lang
 ];
-const GH6 = {pool:["GREE 201","GREE 202","HEBR 201","HEBR 202"], label:"Greek or Hebrew, two courses in one language", cr:6};
+const GH6 = {pool:["GREE 201","GREE 202","HEBR 201","HEBR 202"], label:"Greek or Hebrew, two courses in one language", cr:6, oneTrack:true};
 const GH12 = {pool:["GREE 201","GREE 202","GREE 301","GREE 302","GREE 451","HEBR 201","HEBR 202","HEBR 301","HEBR 302"], label:"Greek and/or Hebrew", cr:12};
 
 const PSYC_CORE = ["MATH 121","MATH 322","PSYC 101","PSYC 102","PSYC 211","PSYC 301","PSYC 305","PSYC 310","PSYC 321","PSYC 332","PSYC 341","PSYC 360"];
@@ -184,7 +184,7 @@ const MINORS = [
 
 const CONCENTRATIONS = [
 {id:"engl-wc", name:"Writing and Communication", total:15, pdf:PDF+"2026-10/Tyndale-University-Program-Requirements-Writing-Communication-2026-2027.pdf", rows:[{pick:1,of:["ENGL 262","ENGL 263"]},"PHIL 201",{pick:3,of:["ARTM 340","ARTM 344","BUSI 203","ENGL 361","ENGL 363","ENGL 440","MEDA 212","MEDA 214","MEDA 280","MEDA 380","PHIL 323"]}], note:"On top of the English major. At least one of the three electives must be 3000/4000 level. The ENGL 262/263 choice cannot also count toward the English major's own ENGL 262/263 requirement."},
-{id:"ling-bt", name:"Bible Translation", total:24, pdf:PDF+"2026-08/Tyndale-University-Program-Requirements-Linguistics-Bible-Translation-2026-2027.pdf", rows:["CHRI 366","LING 405","LING 471","LING 475",{pick:4,of:["GREE 201","GREE 202","GREE 301","GREE 302","HEBR 201","HEBR 202","HEBR 301","HEBR 302"]}]},
+{id:"ling-bt", name:"Bible Translation", total:24, pdf:PDF+"2026-08/Tyndale-University-Program-Requirements-Linguistics-Bible-Translation-2026-2027.pdf", rows:["CHRI 366","LING 405","LING 471","LING 475",{pick:4,of:["GREE 201","GREE 202","GREE 301","GREE 302","HEBR 201","HEBR 202","HEBR 301","HEBR 302"],oneTrack:true}]},
 {id:"phil-apol", name:"Christian Apologetics", total:15, pdf:PDF+"2026-08/Tyndale-University-Program-Requirements-Christian-Apologetics-2026-2027.pdf", rows:["PHIL 261","PHIL 294",{el:"Approved apologetics electives",cr:9}], note:"On top of the Philosophy major. The sheet lists 15 credit hours of coursework but calls it \"12 hours\" net new, since two of the elective options can't double-count toward the major."},
 {id:"phil-law", name:"Law", total:15, pdf:PDF+"2026-09/Tyndale-University-Program-Requirements-Philosophy-Law-2026-2027.pdf", rows:["BUSI 321","PHIL 243","PHIL 311","PHIL 328",{pick:1,of:["PHIL 213","PHIL 215","PHIL 313"]}], note:"On top of the Philosophy major. The sheet lists 15 credit hours of coursework but calls it \"12 hours\" net new, the same framing as the Apologetics concentration."},
 ];

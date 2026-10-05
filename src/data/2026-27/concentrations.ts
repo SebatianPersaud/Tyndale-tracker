@@ -56,7 +56,8 @@ export const CONCENTRATIONS: Concentration[] = [
           "HEBR 202",
           "HEBR 301",
           "HEBR 302"
-        ]
+        ],
+        "oneTrack": true
       }
     ]
   },

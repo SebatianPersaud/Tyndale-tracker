@@ -102,27 +102,28 @@ export function DegreeTab({
             role="img"
             aria-label={`${C.done} done, ${C.prog} in progress, ${C.plan} planned of ${tot}`}
           >
-            <div style={{ width: `${pct(C.done)}%`, background: "var(--done)" }} />
-            <div style={{ width: `${Math.min(pct(C.prog), 100 - pct(C.done))}%`, background: "var(--prog)" }} />
+            {/* Apple color restraint: only "in progress" (the one actively-happening state)
+                keeps the accent blue; done/planned read as neutral fill vs. outline-weight gray. */}
+            <div style={{ width: `${pct(C.done)}%`, background: "var(--fg)" }} />
+            <div style={{ width: `${Math.min(pct(C.prog), 100 - pct(C.done))}%`, background: "var(--accent)" }} />
             <div
               style={{
                 width: `${Math.max(0, Math.min(pct(C.plan), 100 - pct(C.done) - pct(C.prog)))}%`,
-                background: "var(--plan)",
-                opacity: 0.7,
+                background: "var(--line-2)",
               }}
             />
           </div>
           <div className="legend">
             <span>
-              <i className="sw" style={{ background: "var(--done)" }} />
+              <i className="sw" style={{ background: "var(--fg)" }} />
               <b>{C.done}</b> done
             </span>
             <span>
-              <i className="sw" style={{ background: "var(--prog)" }} />
+              <i className="sw" style={{ background: "var(--accent)" }} />
               <b>{C.prog}</b> in progress
             </span>
             <span>
-              <i className="sw" style={{ background: "var(--plan)" }} />
+              <i className="sw" style={{ background: "var(--line-2)" }} />
               <b>{C.plan}</b> planned
             </span>
             <span>

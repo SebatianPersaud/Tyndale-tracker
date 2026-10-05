@@ -59,7 +59,7 @@ h1,h2,h3{text-wrap:balance;margin:0}
 .bar{position:sticky;top:env(safe-area-inset-top,0px);z-index:20;background:color-mix(in srgb,var(--bg) 88%,transparent);backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px);border-bottom:1px solid var(--line)}
 .bar-in{max-width:960px;margin:0 auto;padding:10px 16px;display:flex;align-items:center;gap:12px;flex-wrap:wrap}
 .brand{display:flex;align-items:baseline;gap:8px;margin-right:auto;min-width:0}
-.brand b{font-family:var(--f-display);font-size:19px;font-weight:600;letter-spacing:-.01em}
+.brand b{font-family:var(--f-apple);font-size:19px;font-weight:var(--fw-headline);letter-spacing:-.01em}
 .brand span{font-family:var(--f-apple);font-size:var(--fs-caption);color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .tabs{display:flex;background:var(--surface-2);border:1px solid var(--line);border-radius:999px;padding:3px;gap:2px}
 .tab{border:0;background:transparent;padding:6px 14px;border-radius:999px;font-family:var(--f-apple);font-weight:600;font-size:var(--fs-footnote);color:var(--muted);transition:background var(--dur-fast) var(--ease-apple),color var(--dur-fast) var(--ease-apple)}

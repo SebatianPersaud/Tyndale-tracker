@@ -8,16 +8,22 @@ type View = "signin" | "signup" | "forgot" | "checkEmailSignup" | "checkEmailRes
  * arrived via a password-reset email link) a "set a new password" form. Supabase Auth does
  * all the actual credential handling — this only calls its methods and shows the result.
  */
-export function AuthPanel({ auth }: { auth: ReturnType<typeof useAuth> }) {
+export function AuthPanel({
+  auth,
+  initialView = "signin",
+}: {
+  auth: ReturnType<typeof useAuth>;
+  initialView?: "signin" | "signup";
+}) {
   const { user, passwordRecovery } = auth;
 
   if (passwordRecovery) return <SetNewPassword auth={auth} />;
   if (user) return <AccountInfo auth={auth} />;
-  return <SignedOutForms auth={auth} />;
+  return <SignedOutForms auth={auth} initialView={initialView} />;
 }
 
-function SignedOutForms({ auth }: { auth: ReturnType<typeof useAuth> }) {
-  const [view, setView] = useState<View>("signin");
+function SignedOutForms({ auth, initialView }: { auth: ReturnType<typeof useAuth>; initialView: "signin" | "signup" }) {
+  const [view, setView] = useState<View>(initialView);
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [err, setErr] = useState("");

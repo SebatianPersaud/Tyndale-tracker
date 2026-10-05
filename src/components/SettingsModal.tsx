@@ -29,7 +29,7 @@ export function SettingsModal({
   const [minor, setMinor] = useState(state.minor);
   const [conc, setConc] = useState(state.conc);
   const [confirmReset, setConfirmReset] = useState(false);
-  const [wantsSignIn, setWantsSignIn] = useState(false);
+  const [wantsLocalOnly, setWantsLocalOnly] = useState(false);
 
   if (!open) return null;
 
@@ -45,17 +45,18 @@ export function SettingsModal({
     );
   }
 
-  // First-time setup, not signed in yet: keep it to one focused choice — pick a program,
-  // or sign in — rather than showing both at once.
+  // First-time setup, not signed in yet: lead with account creation (fastest way to get a
+  // synced account going), with picking a program locally as the one-click-away alternative.
   if (forced && !auth.user) {
-    if (wantsSignIn) {
+    if (!wantsLocalOnly) {
       return (
         <div className="scrim" role="dialog" aria-modal="true" aria-labelledby="mh">
           <div className="modal">
-            <h2 id="mh">Sign in</h2>
-            <AuthPanel auth={auth} />
-            <button type="button" className="linkbtn" style={{ alignSelf: "flex-start" }} onClick={() => setWantsSignIn(false)}>
-              ← Back to picking a program
+            <h2 id="mh">Welcome</h2>
+            <p>Create an account to keep your tracker saved and synced across devices.</p>
+            <AuthPanel auth={auth} initialView="signup" />
+            <button type="button" className="linkbtn" style={{ alignSelf: "flex-start" }} onClick={() => setWantsLocalOnly(true)}>
+              Continue without an account →
             </button>
           </div>
         </div>
@@ -85,8 +86,8 @@ export function SettingsModal({
               }));
             }}
           />
-          <button type="button" className="linkbtn" style={{ alignSelf: "flex-start" }} onClick={() => setWantsSignIn(true)}>
-            Already have an account? Sign in
+          <button type="button" className="linkbtn" style={{ alignSelf: "flex-start" }} onClick={() => setWantsLocalOnly(false)}>
+            ← Back to creating an account
           </button>
           <button type="button" className="linkbtn" onClick={onOpenPrivacy}>
             Privacy

@@ -27,3 +27,8 @@ reference/pdfs/
 *.sln
 *.sw?
 .impeccable/
+
+# Local Claude Code tooling (agent installs, skill cache, machine-specific settings)
+.claude/agents/
+.claude/skills/
+.claude/settings.local.json

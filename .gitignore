@@ -26,3 +26,4 @@ reference/pdfs/
 *.njsproj
 *.sln
 *.sw?
+.impeccable/

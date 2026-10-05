@@ -2,7 +2,7 @@ import { useState } from "react";
 import type { Row } from "../data/2026-27/types";
 import type { TrackerState } from "../types";
 import { effChoice, rowCodes, rowTarget, type Computed } from "../lib/requirements";
-import { shown, suggestCode, title } from "../lib/catalog";
+import { suggestCode } from "../lib/catalog";
 import { CourseLine } from "./CourseLine";
 import { Chip } from "./Chip";
 import { CourseAutocomplete } from "./CourseAutocomplete";
@@ -52,15 +52,9 @@ export function RequirementRow({
             that don't count elsewhere.
           </span>
         </div>
-        {list.length > 0 && (
-          <div className="freelist">
-            {list.map((c) => (
-              <span key={c} className="tag" title={`${title(c)} · ${state.status[c] || "Not started"}`}>
-                {shown(c)}
-              </span>
-            ))}
-          </div>
-        )}
+        {list.map((c) => (
+          <CourseLine key={c} code={c} status={state.status[c] ?? ""} onCycle={onCycle} />
+        ))}
         <SlotInput
           placeholder="Add a course, e.g. PSYC 101"
           ariaLabel="Add a course to your electives"

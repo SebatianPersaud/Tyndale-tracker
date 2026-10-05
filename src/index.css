@@ -145,8 +145,6 @@ h1,h2,h3{text-wrap:balance;margin:0}
 .autocomplete-list button .code{margin-right:8px}
 .autocomplete-list button:hover,.autocomplete-list button.hl{background:var(--accent-soft)}
 .freebar{display:flex;align-items:center;gap:12px;font-size:13.5px;color:var(--muted)}
-.freelist{display:flex;flex-wrap:wrap;gap:6px}
-.tag{font-family:var(--f-mono);font-size:12px;padding:2px 8px;border-radius:6px;background:var(--surface-2);border:1px solid var(--line)}
 .notes{margin-top:14px;font-size:13px;color:var(--muted);display:flex;flex-direction:column;gap:4px;padding-left:18px}
 
 /* catalog — same 8pt rhythm and neutral field chrome as everywhere else; focus uses the

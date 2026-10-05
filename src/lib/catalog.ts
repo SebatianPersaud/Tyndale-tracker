@@ -1,7 +1,13 @@
 import { CATALOG } from "../data/2026-27/catalog";
 import { CREDIT_OVERRIDES } from "../data/2026-27/creditOverrides";
+import { COURSE_DESCRIPTIONS } from "../data/2026-27/courseDescriptions";
 
 export const CAT = new Map(CATALOG);
+
+/** Official description + prerequisite text from tyndale.ca, when the course has one. */
+export function details(code: string): { description: string; prereq: string | null } | null {
+  return COURSE_DESCRIPTIONS[code] ?? null;
+}
 
 /** Credit hours for a course code. Most courses are 3; some are overridden (e.g. CHRI 308 = 9). */
 export function cr(code: string): number {

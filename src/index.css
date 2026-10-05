@@ -157,7 +157,9 @@ h1,h2,h3{text-wrap:balance;margin:0}
 @media (max-width:600px){input,select,textarea,.field,.slot input{font-size:16px}}
 .cat{margin-top:16px;background:var(--surface);border:1px solid var(--line);border-radius:var(--r)}
 .cat .course{padding:8px 16px;border-top:1px solid var(--line)}
-.cat .course:first-child{border-top:0}
+.cat>div:first-child .course{border-top:0}
+.course-info{padding:0 16px 12px;font-size:13.5px;color:var(--muted);display:flex;flex-direction:column;gap:6px}
+.course-info b{color:var(--fg)}
 .regc{font-family:var(--f-mono);font-size:var(--fs-caption);color:var(--faint)}
 .empty{padding:32px 16px;text-align:center;color:var(--muted);font-family:var(--f-apple);font-size:var(--fs-body)}
 

@@ -75,3 +75,8 @@ export interface Term {
 }
 
 export type CatalogEntry = [code: string, title: string];
+
+// Official description + prerequisite text from tyndale.ca/course?code=<SUBJECT>. Not every
+// catalog code has an entry here — thesis codes, Media Arts placeholder codes, and applied
+// music/ensemble range codes aren't listed as standalone entries on the live site.
+export type CourseDescriptions = Record<string, { description: string; prereq: string | null }>;

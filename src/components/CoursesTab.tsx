@@ -2,7 +2,7 @@ import { useState } from "react";
 import { CATALOG } from "../data/2026-27/catalog";
 import type { TrackerState } from "../types";
 import { NEXT_STATUS, type Status } from "../types";
-import { cr, regCode, shown, subjects, title } from "../lib/catalog";
+import { cr, details, regCode, shown, subjects, title } from "../lib/catalog";
 import { Pill } from "./Pill";
 
 const SHOWN_LIMIT = 200;
@@ -17,6 +17,7 @@ export function CoursesTab({
   const [q, setQ] = useState("");
   const [subj, setSubj] = useState("");
   const [filter, setFilter] = useState("");
+  const [open, setOpen] = useState<Record<string, boolean>>({});
   const subs = subjects();
 
   const query = q.trim().toLowerCase();
@@ -75,15 +76,35 @@ export function CoursesTab({
         {shownList.length ? (
           shownList.map(([c]) => {
             const rc = regCode(c);
+            const info = details(c);
+            const isOpen = !!open[c];
             return (
-              <div className="course" key={c}>
-                <Pill code={c} status={(state.status[c] ?? "") as Status} onCycle={onCycle} />
-                <div className="ct">
-                  <span className="code">{shown(c)}</span> <span className="title">{title(c)}</span>
+              <div key={c}>
+                <div className="course">
+                  <Pill code={c} status={(state.status[c] ?? "") as Status} onCycle={onCycle} />
+                  <div className="ct">
+                    <span className="code">{shown(c)}</span> <span className="title">{title(c)}</span>
+                  </div>
+                  <span className="crs">
+                    {cr(c)} cr{rc && <span className="regc" title="How it appears in the timetable">{rc}</span>}
+                    {info && (
+                      <button className="linkbtn" onClick={() => setOpen((o) => ({ ...o, [c]: !o[c] }))}>
+                        {isOpen ? "Hide" : "Details"}
+                      </button>
+                    )}
+                  </span>
                 </div>
-                <span className="crs">
-                  {cr(c)} cr{rc && <span className="regc" title="How it appears in the timetable">{rc}</span>}
-                </span>
+                {isOpen && info && (
+                  <div className="course-info">
+                    <p>{info.description}</p>
+                    {info.prereq && (
+                      <p>
+                        <b>Prerequisite{info.prereq.includes(",") || info.prereq.includes(" or ") ? "s" : ""}:</b>{" "}
+                        {info.prereq}
+                      </p>
+                    )}
+                  </div>
+                )}
               </div>
             );
           })

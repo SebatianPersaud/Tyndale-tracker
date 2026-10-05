@@ -21,6 +21,10 @@ m._compile(wrapped, m.filename);
 const { PROGRAMS, MINORS, CONCENTRATIONS, CREDIT_OVERRIDES, TYNDALE_DATES, TERMS } = m.exports;
 
 const catalog = JSON.parse(readFileSync(path.join(ROOT, "reference/catalog.json"), "utf8"));
+const descriptions = JSON.parse(readFileSync(path.join(ROOT, "reference/courseDescriptions.json"), "utf8"));
+const courseDescriptions = Object.fromEntries(
+  descriptions.map(({ code, description, prereq }) => [code, { description, prereq }]),
+);
 
 mkdirSync(OUT_DIR, { recursive: true });
 
@@ -41,5 +45,6 @@ write("creditOverrides.ts", "CreditOverrides", "CreditOverrides", "CREDIT_OVERRI
 write("dates.ts", "DateRow", "DateRow[]", "TYNDALE_DATES", TYNDALE_DATES);
 write("terms.ts", "Term", "Term[]", "TERMS", TERMS);
 write("catalog.ts", "CatalogEntry", "CatalogEntry[]", "CATALOG", catalog);
+write("courseDescriptions.ts", "CourseDescriptions", "CourseDescriptions", "COURSE_DESCRIPTIONS", courseDescriptions);
 
 console.log("done.");

@@ -122,6 +122,14 @@ export function sections(state: TrackerState): ResolvedSection[] {
   return out;
 }
 
+/** Every course code named anywhere in the student's Major/Concentration/Minor requirements
+ *  (not their own choices for {el}/{free} slots, which have no fixed codes to list). */
+export function requirementCodes(state: TrackerState): Set<string> {
+  const out = new Set<string>();
+  sections(state).forEach((s) => s.blocks.forEach((b) => b.rows.forEach((r) => rowCodes(r).forEach((c) => out.add(c)))));
+  return out;
+}
+
 export interface Computed {
   secs: ResolvedSection[];
   done: number;

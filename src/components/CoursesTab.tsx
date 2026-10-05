@@ -1,8 +1,9 @@
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import { CATALOG } from "../data/2026-27/catalog";
 import type { TrackerState } from "../types";
 import { NEXT_STATUS, type Status } from "../types";
 import { cr, details, regCode, shown, subjects, title } from "../lib/catalog";
+import { requirementCodes } from "../lib/requirements";
 import { Pill } from "./Pill";
 
 const SHOWN_LIMIT = 200;
@@ -19,6 +20,8 @@ export function CoursesTab({
   const [filter, setFilter] = useState("");
   const [open, setOpen] = useState<Record<string, boolean>>({});
   const subs = subjects();
+  // eslint-disable-next-line react-hooks/exhaustive-deps -- only the program/minor/concentration choice matters
+  const reqCodes = useMemo(() => requirementCodes(state), [state.program, state.minor, state.conc]);
 
   const query = q.trim().toLowerCase();
   const list = CATALOG.filter(([c, t]) => {
@@ -26,7 +29,8 @@ export function CoursesTab({
     if (query && !(c.toLowerCase().includes(query) || t.toLowerCase().includes(query) || c.replace(" ", "").toLowerCase().includes(query)))
       return false;
     if (filter === "mine" && !state.status[c]) return false;
-    if (filter && filter !== "mine" && (state.status[c] ?? "") !== filter) return false;
+    if (filter === "req" && !reqCodes.has(c)) return false;
+    if (filter && filter !== "mine" && filter !== "req" && (state.status[c] ?? "") !== filter) return false;
     return true;
   });
   const shownList = list.slice(0, SHOWN_LIMIT);
@@ -61,6 +65,7 @@ export function CoursesTab({
         </select>
         <select className="field" value={filter} onChange={(e) => setFilter(e.target.value)} aria-label="Status">
           <option value="">Any status</option>
+          <option value="req">In my degree</option>
           <option value="mine">On my plan</option>
           <option value="d">Done</option>
           <option value="i">In progress</option>

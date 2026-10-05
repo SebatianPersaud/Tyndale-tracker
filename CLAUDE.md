@@ -33,7 +33,7 @@ This file is the project brief. Read it at the start of every session and keep t
 
 - Vite + React + TypeScript
 - Supabase for auth and database (`@supabase/supabase-js`)
-- Hosted on Vercel (free Hobby plan), auto-deploys from the GitHub `main` branch
+- Hosted on Vercel (free Hobby plan), auto-deploys from the GitHub `main` branch, live at degreetracker.ca
 - No other backend. No paid services.
 
 Keep dependencies minimal. Sebastian is learning, so prefer clear, boring code over clever code, and explain what you did in plain language when you finish a step.
@@ -133,5 +133,5 @@ Lecture recording or transcription, grades or GPA tracking, other schools, payme
 - [x] Milestone 0 — project scaffolded; all program PDFs downloaded and checked against programs.js (see reference/DATA-REVIEW.md); discrepancies fixed and committed.
 - [x] Milestone 1 — prototype ported to React/TS: Degree, Calendar and Courses tabs, localStorage save, requirement logic unit-tested (20 tests).
 - [x] Milestone 2 — Supabase auth (sign up/in/out, password reset) and cloud save to `tracker_state` with local-import prompt, delete account via Edge Function, Privacy page. Verified with two test accounts: RLS isolation holds, deletion removes the auth user.
-- [ ] Milestone 3
+- [x] Milestone 3 — deployed to Vercel on a custom domain (degreetracker.ca), connected to GitHub `main` for auto-deploy, Supabase Site URL/Redirect URLs point at the live domain. Smoke-tested on desktop and mobile widths, light and dark mode.
 - [ ] Milestone 4

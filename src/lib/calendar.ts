@@ -20,6 +20,20 @@ TYNDALE_DATES.forEach(([a, b, , kind]) => {
   for (let d = parseD(a); d <= parseD(b); d.setDate(d.getDate() + 1)) NOCLASS.add(ymd(d));
 });
 
+export function fmtDate(ds: string | undefined): string {
+  if (!ds) return "";
+  return parseD(ds).toLocaleDateString(undefined, { month: "short", day: "numeric", year: "numeric" });
+}
+
+/** Parses free-typed input ("Oct 15, 2026", "10/15/2026", …) or an exact "YYYY-MM-DD" into one. */
+export function dateFromInput(value: string): string | null {
+  const v = (value ?? "").trim();
+  if (!v) return null;
+  if (/^\d{4}-\d{2}-\d{2}$/.test(v)) return v;
+  const d = new Date(v);
+  return isNaN(d.getTime()) ? null : ymd(d);
+}
+
 export function fmtTime(t: string | undefined): string {
   if (!t) return "";
   const [h, m] = t.split(":").map(Number);

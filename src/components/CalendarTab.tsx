@@ -1,9 +1,10 @@
 import { useEffect, useMemo, useState } from "react";
 import type { TrackerState, ClassEntry, EventEntry } from "../types";
 import { TERMS } from "../data/2026-27/terms";
-import { DOW, countdown, fmtTime, itemsOn, nextUp, parseD, termProgress, timeFromInput, ymd } from "../lib/calendar";
+import { DOW, countdown, dateFromInput, fmtDate, fmtTime, itemsOn, nextUp, parseD, termProgress, timeFromInput, ymd } from "../lib/calendar";
 import { codeFromInput, shown, title } from "../lib/catalog";
 import { CourseAutocomplete } from "./CourseAutocomplete";
+import { DateAutocomplete } from "./DateAutocomplete";
 import { TimeAutocomplete } from "./TimeAutocomplete";
 
 function newId(): string {
@@ -346,21 +347,26 @@ function EventPanel({
   onDelete: (id: string) => void;
 }) {
   const [titleVal, setTitleVal] = useState("");
-  const [date, setDate] = useState(selDate);
+  const [date, setDate] = useState(fmtDate(selDate));
   const [time, setTime] = useState("");
   const [err, setErr] = useState("");
 
   const submit = (e: React.FormEvent) => {
     e.preventDefault();
     const t = titleVal.trim();
-    if (!t || !date) return;
+    if (!t) return;
+    const rDate = dateFromInput(date);
+    if (!rDate) {
+      setErr("Pick a date from the calendar, or type one like Oct 15, 2026.");
+      return;
+    }
     const rTime = time.trim() ? timeFromInput(time) : "";
     if (rTime === null) {
       setErr("Pick a time from the list, e.g. 10:30 am, or leave it blank.");
       return;
     }
     setErr("");
-    onAdd({ id: newId(), title: t.slice(0, 80), date, time: rTime });
+    onAdd({ id: newId(), title: t.slice(0, 80), date: rDate, time: rTime });
     setTitleVal("");
     setTime("");
   };
@@ -408,7 +414,7 @@ function EventPanel({
         </label>
         <label>
           Date
-          <input className="field" type="date" required value={date} onChange={(e) => setDate(e.target.value)} />
+          <DateAutocomplete className="field" required value={date} onChange={setDate} onPick={() => {}} />
         </label>
         <label>
           Time (optional)

@@ -64,7 +64,7 @@ function SignedOutForms({ auth }: { auth: ReturnType<typeof useAuth> }) {
   };
 
   return (
-    <div className="acct" style={{ flexDirection: "column", alignItems: "stretch", gap: 10 }}>
+    <div className="acct" style={{ flexDirection: "column", alignItems: "stretch", gap: 12 }}>
       <div style={{ display: "flex", gap: 8 }}>
         <b>{view === "signup" ? "Create an account" : view === "forgot" ? "Reset your password" : "Sign in"}</b>
       </div>
@@ -145,7 +145,7 @@ function SetNewPassword({ auth }: { auth: ReturnType<typeof useAuth> }) {
   };
 
   return (
-    <div className="acct" style={{ flexDirection: "column", alignItems: "stretch", gap: 10 }}>
+    <div className="acct" style={{ flexDirection: "column", alignItems: "stretch", gap: 12 }}>
       <b>Set a new password</b>
       <form onSubmit={submit} style={{ display: "flex", flexDirection: "column", gap: 8 }}>
         <input
@@ -186,7 +186,7 @@ function AccountInfo({ auth }: { auth: ReturnType<typeof useAuth> }) {
   };
 
   return (
-    <div className="acct" style={{ flexDirection: "column", alignItems: "stretch", gap: 10 }}>
+    <div className="acct" style={{ flexDirection: "column", alignItems: "stretch", gap: 12 }}>
       <span>
         Signed in as <b>{auth.user?.email}</b>. Your tracker is saved to your account.
       </span>

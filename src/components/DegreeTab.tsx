@@ -81,11 +81,11 @@ export function DegreeTab({
     <>
       <section className="summary">
         <div>
-          <div className="eyebrow">{state.name ? `${state.name}’s degree` : "Your degree"}</div>
           <h1>
             {p.cred} in {p.name}
           </h1>
           <div className="sub">
+            {state.name && <span>{state.name}</span>}
             <span>{m ? `${m.name} minor` : "No minor"}</span>
             {hasConc && <span>{conc!.name} concentration</span>}
             <span>Min. GPA {p.gpa}</span>
@@ -128,26 +128,16 @@ export function DegreeTab({
             <span>
               <b>{Math.max(0, tot - C.done - C.prog - C.plan)}</b> still to plan
             </span>
-          </div>
-        </div>
-        <div className="stats">
-          <div className="stat">
-            <div className="k">Upper-level (3000/4000)</div>
-            <div className="v">
-              {C.upper} <small>/ {upperNeeded} needed</small>
-            </div>
-          </div>
-          <div className="stat">
-            <div className="k">Courses done</div>
-            <div className="v">
-              {coursesDone} <small>courses</small>
-            </div>
-          </div>
-          <div className="stat">
-            <div className="k">Requirement blocks met</div>
-            <div className="v">
-              {blocksMet} <small>/ {blocksTotal}</small>
-            </div>
+            <span className="div" />
+            <span>
+              <b>{C.upper}</b> / {upperNeeded} upper-level
+            </span>
+            <span>
+              <b>{coursesDone}</b> courses done
+            </span>
+            <span>
+              <b>{blocksMet}</b> / {blocksTotal} requirement blocks met
+            </span>
           </div>
         </div>
       </section>
@@ -155,8 +145,9 @@ export function DegreeTab({
       {C.secs.map((s) => (
         <div key={s.key}>
           <div className="section-h">
-            <span className="eyebrow">{s.kind}</span>
-            <h2>{s.title}</h2>
+            <h2>
+              <span className="kind">{s.kind}</span> {s.title}
+            </h2>
             <a href={s.pdf} target="_blank" rel="noopener noreferrer">
               Official sheet ↗
             </a>

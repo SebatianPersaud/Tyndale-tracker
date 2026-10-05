@@ -116,7 +116,7 @@ export function SettingsModal({
       <div className="modal">
         <h2 id="mh">Settings</h2>
         <AuthPanel auth={auth} />
-        <form onSubmit={submit} style={{ display: "flex", flexDirection: "column", gap: 14 }}>
+        <form onSubmit={submit} style={{ display: "flex", flexDirection: "column", gap: 16 }}>
           <label>
             Your first name
             <input
@@ -264,7 +264,7 @@ function ProfileForm({
         e.preventDefault();
         onSubmit();
       }}
-      style={{ display: "flex", flexDirection: "column", gap: 14 }}
+      style={{ display: "flex", flexDirection: "column", gap: 16 }}
     >
       <label>
         Your first name

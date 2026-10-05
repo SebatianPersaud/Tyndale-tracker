@@ -57,7 +57,7 @@ export default function App() {
         <Footer onOpenPrivacy={() => setOpenPrivacy(true)} />
       </main>
       <SettingsModal
-        open={settingsOpen}
+        open={settingsOpen && !openPrivacy}
         forced={forced}
         state={state}
         setState={setState}

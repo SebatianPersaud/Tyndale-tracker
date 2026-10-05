@@ -1,9 +1,10 @@
 import { useEffect, useMemo, useState } from "react";
 import type { TrackerState, ClassEntry, EventEntry } from "../types";
 import { TERMS } from "../data/2026-27/terms";
-import { DOW, countdown, fmtTime, itemsOn, nextUp, parseD, termProgress, ymd } from "../lib/calendar";
+import { DOW, countdown, fmtTime, itemsOn, nextUp, parseD, termProgress, timeFromInput, ymd } from "../lib/calendar";
 import { codeFromInput, shown, title } from "../lib/catalog";
 import { CourseAutocomplete } from "./CourseAutocomplete";
+import { TimeAutocomplete } from "./TimeAutocomplete";
 
 function newId(): string {
   return Math.random().toString(36).slice(2, 9);
@@ -215,8 +216,8 @@ function ClassPanel({
 }) {
   const [code, setCode] = useState("");
   const [days, setDays] = useState<number[]>([]);
-  const [start, setStart] = useState("10:00");
-  const [end, setEnd] = useState("11:20");
+  const [start, setStart] = useState(fmtTime("10:00"));
+  const [end, setEnd] = useState(fmtTime("11:20"));
   const [term, setTerm] = useState(TERMS[0]?.id ?? "");
   const [room, setRoom] = useState("");
   const [err, setErr] = useState("");
@@ -234,12 +235,18 @@ function ClassPanel({
       setErr("Choose at least one day.");
       return;
     }
-    if (end <= start) {
+    const rStart = timeFromInput(start);
+    const rEnd = timeFromInput(end);
+    if (!rStart || !rEnd) {
+      setErr("Pick a start and end time from the list, e.g. 10:30 am.");
+      return;
+    }
+    if (rEnd <= rStart) {
       setErr("End time must be after the start time.");
       return;
     }
     setErr("");
-    onAdd({ id: newId(), code: resolved, days, start, end, term, room: room.trim().slice(0, 30) });
+    onAdd({ id: newId(), code: resolved, days, start: rStart, end: rEnd, term, room: room.trim().slice(0, 30) });
     setCode("");
     setDays([]);
     setRoom("");
@@ -296,11 +303,11 @@ function ClassPanel({
         </div>
         <label>
           Starts
-          <input className="field" type="time" required value={start} onChange={(e) => setStart(e.target.value)} />
+          <TimeAutocomplete className="field" required value={start} onChange={setStart} onPick={() => {}} />
         </label>
         <label>
           Ends
-          <input className="field" type="time" required value={end} onChange={(e) => setEnd(e.target.value)} />
+          <TimeAutocomplete className="field" required value={end} onChange={setEnd} onPick={() => {}} />
         </label>
         <label>
           Term
@@ -341,12 +348,19 @@ function EventPanel({
   const [titleVal, setTitleVal] = useState("");
   const [date, setDate] = useState(selDate);
   const [time, setTime] = useState("");
+  const [err, setErr] = useState("");
 
   const submit = (e: React.FormEvent) => {
     e.preventDefault();
     const t = titleVal.trim();
     if (!t || !date) return;
-    onAdd({ id: newId(), title: t.slice(0, 80), date, time });
+    const rTime = time.trim() ? timeFromInput(time) : "";
+    if (rTime === null) {
+      setErr("Pick a time from the list, e.g. 10:30 am, or leave it blank.");
+      return;
+    }
+    setErr("");
+    onAdd({ id: newId(), title: t.slice(0, 80), date, time: rTime });
     setTitleVal("");
     setTime("");
   };
@@ -398,8 +412,15 @@ function EventPanel({
         </label>
         <label>
           Time (optional)
-          <input className="field" type="time" value={time} onChange={(e) => setTime(e.target.value)} />
+          <TimeAutocomplete
+            className="field"
+            placeholder="No specific time"
+            value={time}
+            onChange={setTime}
+            onPick={() => {}}
+          />
         </label>
+        {err && <span className="err full">{err}</span>}
         <div className="full">
           <button className="btn" type="submit">
             Add date

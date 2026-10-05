@@ -26,6 +26,27 @@ export function fmtTime(t: string | undefined): string {
   return `${(h % 12) || 12}:${pad(m)}${h < 12 ? " am" : " pm"}`;
 }
 
+/** Every "HH:MM" time of day on a 5-minute grid, for TimeAutocomplete's suggestion list. */
+export const TIME_OPTIONS: string[] = Array.from({ length: 24 * 12 }, (_, i) => {
+  const t = `${pad(Math.floor(i / 12))}:${pad((i % 12) * 5)}`;
+  return t;
+});
+
+/** Lowercase, punctuation/space-stripped, for loose matching ("1030am" / "10:30 am" / "10 30 AM"). */
+const compact = (s: string): string => s.toLowerCase().replace(/[^a-z0-9]/g, "");
+
+/** Parses free-typed input like "10:30am", "1030pm", or an exact "HH:MM" into a real "HH:MM". */
+export function timeFromInput(value: string): string | null {
+  const v = (value ?? "").trim();
+  if (!v) return null;
+  if (TIME_OPTIONS.includes(v)) return v;
+  const q = compact(v);
+  const exact = TIME_OPTIONS.find((t) => compact(fmtTime(t)) === q);
+  if (exact) return exact;
+  const prefix = TIME_OPTIONS.find((t) => compact(fmtTime(t)).startsWith(q));
+  return prefix ?? null;
+}
+
 export interface CalendarItem {
   kind: DateKind | "cls" | "mine";
   text: string;

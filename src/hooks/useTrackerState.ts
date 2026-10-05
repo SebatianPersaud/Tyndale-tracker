@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import type { User } from "@supabase/supabase-js";
 import { blankState, type TrackerState } from "../types";
-import { loadLocal, saveLocal } from "../lib/storage";
+import { clearLocal, loadLocal, saveLocal } from "../lib/storage";
 import { fetchRemoteState, saveRemoteState } from "../lib/cloudStorage";
 
 // "local" means "signed in, but couldn't reach your account — saved to this device only".
@@ -27,6 +27,7 @@ export function useTrackerState(user: User | null) {
   const timer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const firstRender = useRef(true);
   const suppressSave = useRef(false);
+  const wasSignedIn = useRef(false);
   const userId = user?.id ?? null;
 
   const setState = useCallback((updater: (prev: TrackerState) => TrackerState) => {
@@ -42,11 +43,21 @@ export function useTrackerState(user: User | null) {
     let cancelled = false;
     if (!userId) {
       suppressSave.current = true;
-      setStateRaw(loadLocal() ?? blankState());
+      if (wasSignedIn.current) {
+        // Just signed out (or deleted their account) on this device — the cached copy was
+        // only ever a mirror of that account's cloud data, so it can't be left for whoever
+        // uses this device next.
+        clearLocal();
+        setStateRaw(blankState());
+      } else {
+        setStateRaw(loadLocal() ?? blankState());
+      }
+      wasSignedIn.current = false;
       setSync("saved");
       setImportPrompt(false);
       return;
     }
+    wasSignedIn.current = true;
     setBusy(true);
     fetchRemoteState(userId)
       .then((remote) => {

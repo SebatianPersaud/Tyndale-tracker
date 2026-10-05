@@ -21,6 +21,16 @@ export function saveLocal(state: TrackerState): void {
   }
 }
 
+/** Wipes the cached tracker on sign-out/account-deletion so it can't linger for the next
+ *  person on a shared device — the signed-in copy was always just a mirror of the cloud row. */
+export function clearLocal(): void {
+  try {
+    localStorage.removeItem(LKEY);
+  } catch {
+    // ignore
+  }
+}
+
 export function loadTab(): string | null {
   try {
     return localStorage.getItem(TAB_KEY);

@@ -117,8 +117,8 @@ export function nextUp(state: TrackerState, now: Date = new Date()): NextUp | nu
   return null;
 }
 
-/** Formats a countdown like "3d 04h 12m 05s" to the given target time. */
-export function countdown(at: Date, now: Date = new Date()): string {
+/** Formats a countdown like "3d 04h 12m" (or "...12m 05s" with seconds) to the given target time. */
+export function countdown(at: Date, now: Date = new Date(), withSeconds = false): string {
   let s = Math.max(0, Math.floor((at.getTime() - now.getTime()) / 1000));
   const d = Math.floor(s / 86400);
   s %= 86400;
@@ -126,7 +126,7 @@ export function countdown(at: Date, now: Date = new Date()): string {
   s %= 3600;
   const m = Math.floor(s / 60);
   s %= 60;
-  return `${d ? d + "d " : ""}${pad(h)}h ${pad(m)}m ${pad(s)}s`;
+  return `${d ? d + "d " : ""}${pad(h)}h ${pad(m)}m${withSeconds ? ` ${pad(s)}s` : ""}`;
 }
 
 export interface TermProgress {

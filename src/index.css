@@ -3,6 +3,10 @@
   --bg:#f3f5f8; --surface:#ffffff; --surface-2:#e7ebf2; --line:#dde2ea; --line-2:#c9d0db;
   --fg:#141821; --muted:#5a6372; --faint:#637085;
   --accent:#24448f; --accent-ink:#ffffff; --accent-soft:#e3e9f7;
+  /* "Done" always reads as the same solid dark/light-text badge in both themes — not an
+     fg/bg invert, which would flip it from a black pill in light mode to a near-white one
+     in dark mode and make the same state look like two different designs. */
+  --pill-done:#1c2230; --pill-done-ink:#ffffff;
   /* --hol is the one other meaningful color on the page: destructive actions and the
      single can't-miss calendar category (exams). Everything else is neutral — see
      src/components/CalendarTab's .ev rules and the Apple-restraint note above them. */
@@ -31,12 +35,14 @@
   --fg:#e7eaf0; --muted:#9aa3b1; --faint:#8891a0;
   --accent:#8fb0ff; --accent-ink:#0e1116; --accent-soft:#1d2840;
   --hol:#f07f8c; --hol-soft:#2d1a1e;
+  --pill-done:#323b48; --pill-done-ink:#e7eaf0;
   --shadow:0 1px 2px rgba(0,0,0,.4),0 6px 20px rgba(0,0,0,.25); color-scheme:dark}}
 :root[data-theme="dark"]{
   --bg:#0e1116; --surface:#151a21; --surface-2:#232a35; --line:#252c37; --line-2:#323b48;
   --fg:#e7eaf0; --muted:#9aa3b1; --faint:#8891a0;
   --accent:#8fb0ff; --accent-ink:#0e1116; --accent-soft:#1d2840;
   --hol:#f07f8c; --hol-soft:#2d1a1e;
+  --pill-done:#323b48; --pill-done-ink:#e7eaf0;
   --shadow:0 1px 2px rgba(0,0,0,.4),0 6px 20px rgba(0,0,0,.25); color-scheme:dark}
 *{box-sizing:border-box}
 /* Site-wide default is the Apple sans stack (real San Francisco on Apple devices, via
@@ -111,6 +117,15 @@ h1,h2,h3{text-wrap:balance;margin:0}
 .course .code{font-family:var(--f-mono);font-size:13px;font-weight:500}
 .course .title{display:block;color:var(--muted);font-size:13.5px;line-height:1.35;overflow-wrap:anywhere}
 .course .crs{font-size:12.5px;color:var(--faint);font-variant-numeric:tabular-nums;display:flex;align-items:center;gap:6px}
+/* Below phone width, the 3-column grid has no room for a long title — stack it to two
+   rows (pill+title, then credits/code/Details) instead of squeezing titles into 6+ wrapped
+   lines that push the trailing column out of alignment. */
+@media (max-width:480px){
+  .course{grid-template-columns:auto minmax(0,1fr);grid-template-areas:"pill ct" "crs crs";row-gap:6px}
+  .course>.pill{grid-area:pill}
+  .course .ct{grid-area:ct}
+  .course .crs{grid-area:crs;padding-left:calc(96px + 12px)}
+}
 .x{border:0;background:transparent;color:var(--faint);font-size:18px;line-height:1;padding:2px 6px;border-radius:6px;transition:color var(--dur-fast) var(--ease-apple),background var(--dur-fast) var(--ease-apple)}
 .x:hover{color:var(--hol);background:var(--hol-soft)}
 
@@ -122,7 +137,7 @@ h1,h2,h3{text-wrap:balance;margin:0}
 .pill[data-s="p"]{background:var(--surface-2);color:var(--muted);border-color:transparent}
 .pill[data-s="i"]{background:var(--accent-soft);color:var(--accent);border-color:transparent}
 .pill[data-s="i"]::before{background:linear-gradient(90deg,currentColor 50%,transparent 50%)}
-.pill[data-s="d"]{background:var(--fg);color:var(--bg);border-color:transparent}
+.pill[data-s="d"]{background:var(--pill-done);color:var(--pill-done-ink);border-color:transparent}
 .pill[data-s="d"]::before{background:currentColor}
 
 .chips{display:flex;flex-wrap:wrap;gap:6px}
@@ -195,7 +210,7 @@ h1,h2,h3{text-wrap:balance;margin:0}
 .next .eyebrow{color:inherit;opacity:.8}
 .next .what{font-family:var(--f-apple);font-size:var(--fs-title2);font-weight:var(--fw-title2);line-height:1.2}
 .next .when{font-family:var(--f-apple);font-size:var(--fs-footnote);opacity:.85}
-.count-down{font-family:var(--f-mono);font-size:26px;font-weight:500;font-variant-numeric:tabular-nums;letter-spacing:-.02em}
+.count-down{font-family:var(--f-mono);font-size:17px;font-weight:700;font-variant-numeric:tabular-nums;letter-spacing:-.01em}
 .termcard{background:var(--surface);border:1px solid var(--line);border-radius:var(--r);padding:16px;display:flex;flex-direction:column;gap:8px}
 .month{margin-top:16px;background:var(--surface);border:1px solid var(--line);border-radius:var(--r);overflow:hidden}
 .month-h{display:flex;align-items:center;gap:8px;padding:12px;border-bottom:1px solid var(--line)}

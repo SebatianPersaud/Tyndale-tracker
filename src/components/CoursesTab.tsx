@@ -91,7 +91,12 @@ export function CoursesTab({
                     <span className="code">{shown(c)}</span> <span className="title">{title(c)}</span>
                   </div>
                   <span className="crs">
-                    {cr(c)} cr{rc && <span className="regc" title="How it appears in the timetable">{rc}</span>}
+                    {cr(c)} cr
+                    {rc && (
+                      <span className="regc" title="How it appears in the timetable">
+                        reg: {rc}
+                      </span>
+                    )}
                     {info && (
                       <button className="linkbtn" onClick={() => setOpen((o) => ({ ...o, [c]: !o[c] }))}>
                         {isOpen ? "Hide" : "Details"}

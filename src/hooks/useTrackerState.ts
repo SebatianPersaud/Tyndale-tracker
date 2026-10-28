@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useLayoutEffect, useRef, useState } from "react";
 import type { User } from "@supabase/supabase-js";
 import { blankState, type TrackerState } from "../types";
 import { clearLocal, loadLocal, saveLocal } from "../lib/storage";
@@ -28,15 +28,40 @@ export function useTrackerState(user: User | null) {
   const firstRender = useRef(true);
   const suppressSave = useRef(false);
   const wasSignedIn = useRef(false);
+  const pendingScrollY = useRef<number | null>(null);
+  const preGestureScrollY = useRef<number | null>(null);
   const userId = user?.id ?? null;
 
+  // The browser scrolls a newly-focused element into view as part of a click's default
+  // action, before our onClick handler (and its setState call) ever runs — so by the time
+  // setState reads window.scrollY, it may already reflect that native jump. Capture it one
+  // step earlier, at pointerdown, so the later restore has the true pre-click position.
+  useEffect(() => {
+    const onPointerDown = () => {
+      preGestureScrollY.current = window.scrollY;
+    };
+    window.addEventListener("pointerdown", onPointerDown, true);
+    return () => window.removeEventListener("pointerdown", onPointerDown, true);
+  }, []);
+
   const setState = useCallback((updater: (prev: TrackerState) => TrackerState) => {
+    // Marking a course/row status can change how much is above the click (a chip grid
+    // collapsing, a row growing) and shove the viewport around. Pin scroll position across
+    // the resulting re-render so clicking something you can see never jumps you elsewhere.
+    pendingScrollY.current = preGestureScrollY.current ?? window.scrollY;
     setStateRaw((prev) => {
       const next = updater(prev);
       next.updated = Date.now();
       return next;
     });
   }, []);
+
+  useLayoutEffect(() => {
+    if (pendingScrollY.current !== null) {
+      window.scrollTo(0, pendingScrollY.current);
+      pendingScrollY.current = null;
+    }
+  }, [state]);
 
   // When who's signed in changes, load the right source of truth.
   useEffect(() => {

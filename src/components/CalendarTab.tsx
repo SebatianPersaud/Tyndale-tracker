@@ -24,15 +24,15 @@ export function CalendarTab({
   const [sel, setSel] = useState<string | null>(null);
   const [, setTick] = useState(0);
 
-  // Recomputed every render (cheap) — the 1s interval below just forces a render so the
-  // countdown display stays live; it doesn't need its own state for nu/tp.
+  // Recomputed every render (cheap) — the 1-minute interval below just forces a render so
+  // the countdown display stays live; it doesn't need its own state for nu/tp.
   const nu = nextUp(state);
   const tp = termProgress();
   const nextAt = nu?.at.getTime();
 
   useEffect(() => {
     if (!nextAt) return;
-    const id = setInterval(() => setTick((t) => t + 1), 1000);
+    const id = setInterval(() => setTick((t) => t + 1), 60000);
     return () => clearInterval(id);
   }, [nextAt]);
 

@@ -3,6 +3,18 @@ import type { useAuth } from "../hooks/useAuth";
 
 type View = "signin" | "signup" | "forgot" | "checkEmailSignup" | "checkEmailReset";
 
+// Supabase's own errors ("Invalid login credentials", etc.) are already written for a user
+// to read. A failed *connection* instead throws the browser's own raw wording ("Failed to
+// fetch" in Chrome, "Load failed" in Safari) — true most often when an ad blocker or privacy
+// extension blocks requests to Supabase, which some blocklists flag as a tracking domain.
+function friendlyAuthError(e: unknown, fallback: string): string {
+  const msg = e instanceof Error ? e.message : "";
+  if (/load failed|failed to fetch|networkerror/i.test(msg)) {
+    return "Couldn't reach the server. Check your internet connection — if it's fine, an ad blocker or privacy extension may be blocking this site; try turning it off here.";
+  }
+  return msg || fallback;
+}
+
 /**
  * The account area shown in Settings: sign in/up/out, forgot-password, and (when the user
  * arrived via a password-reset email link) a "set a new password" form. Supabase Auth does
@@ -63,7 +75,7 @@ function SignedOutForms({ auth, initialView }: { auth: ReturnType<typeof useAuth
         if (error) throw error;
       }
     } catch (e) {
-      setErr(e instanceof Error ? e.message : "Something went wrong.");
+      setErr(friendlyAuthError(e, "Something went wrong."));
     } finally {
       setBusy(false);
     }
@@ -144,7 +156,7 @@ function SetNewPassword({ auth }: { auth: ReturnType<typeof useAuth> }) {
       setDone(true);
       auth.clearPasswordRecovery();
     } catch (e) {
-      setErr(e instanceof Error ? e.message : "Something went wrong.");
+      setErr(friendlyAuthError(e, "Something went wrong."));
     } finally {
       setBusy(false);
     }
@@ -186,7 +198,7 @@ function AccountInfo({ auth }: { auth: ReturnType<typeof useAuth> }) {
       await deleteAccount();
       await auth.signOut();
     } catch (e) {
-      setErr(e instanceof Error ? e.message : "Couldn't delete your account — try again in a bit.");
+      setErr(friendlyAuthError(e, "Couldn't delete your account — try again in a bit."));
       setDeleting(false);
     }
   };

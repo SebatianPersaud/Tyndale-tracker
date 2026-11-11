@@ -1,8 +1,8 @@
 import { useState } from "react";
 import type { Row } from "../data/2026-27/types";
 import type { TrackerState } from "../types";
-import { effChoice, rowCodes, rowTarget, type Computed } from "../lib/requirements";
-import { elAllows, elMatchLabel, suggestCode } from "../lib/catalog";
+import { effChoice, elSlotsRemaining, rowCodes, rowTarget, type Computed } from "../lib/requirements";
+import { cr, elAllows, elMatchLabel, suggestCode } from "../lib/catalog";
 import { CourseLine } from "./CourseLine";
 import { Chip } from "./Chip";
 import { CourseAutocomplete } from "./CourseAutocomplete";
@@ -67,13 +67,14 @@ export function RequirementRow({
   const chosen = effChoice(row, rowKey, state);
 
   if ("el" in row) {
-    const slots = Math.max(1, Math.ceil(row.cr / 3));
-    const empty = Math.max(0, slots - chosen.length);
+    const filledCr = chosen.reduce((a, c) => a + cr(c), 0);
+    const empty = elSlotsRemaining(row, chosen);
     const hintText = elMatchLabel(row);
     return (
       <div className="row">
         <div className="row-label">
-          {row.el} <span className="count">· {row.cr} cr</span>
+          {row.el}{" "}
+          <span className="count">· {chosen.length ? `${filledCr} of ${row.cr} cr chosen` : `${row.cr} cr`}</span>
           {hintText && <span className="faint">· {hintText}</span>}
         </div>
         {chosen.map((c) => (

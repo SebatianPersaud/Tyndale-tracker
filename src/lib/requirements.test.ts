@@ -1,6 +1,6 @@
 import { describe, it, expect } from "vitest";
 import { blankState } from "../types";
-import { rowTarget, effChoice, rowCourses, sections, compute, blockDone, rowKey, PROG, MIN } from "./requirements";
+import { rowTarget, elSlotsRemaining, effChoice, rowCourses, sections, compute, blockDone, rowKey, PROG, MIN } from "./requirements";
 import type { PickRow, PoolRow, ElRow, FreeRow } from "../data/2026-27/types";
 
 describe("rowTarget", () => {
@@ -176,5 +176,27 @@ describe("blockDone", () => {
     const C = compute(state);
     const b = minorSection.blocks[0];
     expect(blockDone(minorSection, b, 0, C, state)).toBe(minor.total);
+  });
+});
+
+describe("elSlotsRemaining", () => {
+  const row: ElRow = { el: "Fine Arts elective", cr: 3, hint: "ARTM, MUSC or MEDA" };
+
+  it("offers the count-based number of boxes up front", () => {
+    expect(elSlotsRemaining(row, [])).toBe(1);
+    expect(elSlotsRemaining({ ...row, cr: 6 }, [])).toBe(2);
+  });
+
+  it("a normal 3-credit course fills a 3-credit row", () => {
+    expect(elSlotsRemaining(row, ["ARTM 100"])).toBe(0);
+  });
+
+  it("a 1-credit course does not fill a 3-credit row — one more box is still offered", () => {
+    expect(elSlotsRemaining(row, ["MUSC 390"])).toBe(1); // MUSC 390 is a 1-credit override
+  });
+
+  it("stops once the row's own credit target is actually met, however many courses it took", () => {
+    const twoLessons = ["MUSC 390", "MUSC 335"]; // 1 + 2 = 3 credits
+    expect(elSlotsRemaining(row, twoLessons)).toBe(0);
   });
 });

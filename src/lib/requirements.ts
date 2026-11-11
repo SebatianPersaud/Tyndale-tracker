@@ -63,6 +63,20 @@ export function rowTarget(row: Row): number {
   return row.cr ?? 0;
 }
 
+/**
+ * How many more "add a course" boxes an elective row needs. Courses don't all cost the same
+ * credits (an Applied Music lesson can be 1 or 2, not the usual 3), so this sums what's
+ * actually chosen rather than counting courses — one 1-credit pick must not read as "this
+ * 3-credit row is full" and hide the box to add a second course. Still offers the count-based
+ * number of boxes up front when nothing's missing credit-wise, so an all-3-credit row can be
+ * filled in parallel like before; otherwise always at least one box, however many it already took.
+ */
+export function elSlotsRemaining(row: ElRow, chosen: string[]): number {
+  const filled = chosen.reduce((a, c) => a + cr(c), 0);
+  if (filled >= row.cr) return 0;
+  return Math.max(1, Math.ceil(row.cr / 3) - chosen.length);
+}
+
 export interface ResolvedBlock {
   t: string;
   cr: number;

@@ -36,11 +36,12 @@ export function CourseAutocomplete({
   const wrapRef = useRef<HTMLDivElement>(null);
 
   const query = value.trim().toLowerCase();
+  const allowed = allow ? CATALOG.filter(([c]) => allow(c)) : CATALOG;
+  // Before typing, show every option the slot accepts (so what's allowed is discoverable up
+  // front, not just once you've guessed a code); once typing starts, narrow and cap the list.
   const matches = query
-    ? CATALOG.filter(
-        ([c, t]) => (shown(c).toLowerCase().includes(query) || t.toLowerCase().includes(query)) && (!allow || allow(c)),
-      ).slice(0, MAX_SUGGESTIONS)
-    : [];
+    ? allowed.filter(([c, t]) => shown(c).toLowerCase().includes(query) || t.toLowerCase().includes(query)).slice(0, MAX_SUGGESTIONS)
+    : allowed;
 
   useEffect(() => {
     function onDocClick(e: MouseEvent) {

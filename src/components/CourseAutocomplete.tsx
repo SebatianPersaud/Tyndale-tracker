@@ -19,6 +19,7 @@ export function CourseAutocomplete({
   onChange,
   onPick,
   required,
+  allow,
 }: {
   className?: string;
   placeholder?: string;
@@ -27,6 +28,8 @@ export function CourseAutocomplete({
   onChange: (value: string) => void;
   onPick: (code: string) => void;
   required?: boolean;
+  /** Restricts both suggestions and what Enter/click can pick, e.g. to one elective slot's allowed subjects. */
+  allow?: (code: string) => boolean;
 }) {
   const [open, setOpen] = useState(false);
   const [highlight, setHighlight] = useState(0);
@@ -35,7 +38,7 @@ export function CourseAutocomplete({
   const query = value.trim().toLowerCase();
   const matches = query
     ? CATALOG.filter(
-        ([c, t]) => shown(c).toLowerCase().includes(query) || t.toLowerCase().includes(query),
+        ([c, t]) => (shown(c).toLowerCase().includes(query) || t.toLowerCase().includes(query)) && (!allow || allow(c)),
       ).slice(0, MAX_SUGGESTIONS)
     : [];
 

@@ -63,7 +63,15 @@ export const MINORS: Minor[] = [
       "CHRI 344",
       {
         "el": "CHRI courses or PSYC 211",
-        "cr": 6
+        "cr": 6,
+        "match": {
+          "subjects": [
+            "CHRI"
+          ],
+          "codes": [
+            "PSYC 211"
+          ]
+        }
       }
     ]
   },
@@ -242,11 +250,26 @@ export const MINORS: Minor[] = [
       },
       {
         "el": "Applied Music or music elective",
-        "cr": 2
+        "cr": 2,
+        "match": {
+          "subjects": [
+            "MUSC"
+          ]
+        }
       },
       {
         "el": "MUSC, ARTM 310, ARTM 312 or CHRI 340",
-        "cr": 6
+        "cr": 6,
+        "match": {
+          "subjects": [
+            "MUSC"
+          ],
+          "codes": [
+            "ARTM 310",
+            "ARTM 312",
+            "CHRI 340"
+          ]
+        }
       }
     ]
   },
@@ -262,7 +285,16 @@ export const MINORS: Minor[] = [
       "CHRI 349",
       {
         "el": "CHRI course, PSYC 211 or PSYC 212",
-        "cr": 6
+        "cr": 6,
+        "match": {
+          "subjects": [
+            "CHRI"
+          ],
+          "codes": [
+            "PSYC 211",
+            "PSYC 212"
+          ]
+        }
       }
     ]
   },
@@ -339,7 +371,15 @@ export const MINORS: Minor[] = [
       },
       {
         "el": "CHRI courses or PSYC 211",
-        "cr": 6
+        "cr": 6,
+        "match": {
+          "subjects": [
+            "CHRI"
+          ],
+          "codes": [
+            "PSYC 211"
+          ]
+        }
       }
     ]
   }

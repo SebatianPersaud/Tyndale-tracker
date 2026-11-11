@@ -22,6 +22,12 @@ export interface ElRow {
   el: string;
   cr: number;
   hint?: string;
+  // Explicit override for what counts toward this slot, for the handful of elective labels
+  // `elMatch()` (src/lib/catalog.ts) can't safely infer from `el`/`hint` text alone — e.g. a
+  // subject that isn't spelled out ("Music Ensemble") or a subject-or-specific-codes mix
+  // ("CHRI course, PSYC 211 or PSYC 212"). Most elective rows don't need this: their subject
+  // and level restriction is read straight off the label/hint, so the two can't drift apart.
+  match?: { subjects?: string[]; codes?: string[]; min?: number; max?: number; exclude?: string[] };
 }
 export interface FreeRow {
   free: number;

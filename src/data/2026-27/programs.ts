@@ -862,7 +862,18 @@ export const PROGRAMS: Program[] = [
           },
           {
             "el": "BSTH/CHRI courses, PHIL 294, PSYC 211 or 212",
-            "cr": 15
+            "cr": 15,
+            "match": {
+              "subjects": [
+                "BSTH",
+                "CHRI"
+              ],
+              "codes": [
+                "PHIL 294",
+                "PSYC 211",
+                "PSYC 212"
+              ]
+            }
           }
         ]
       ],
@@ -2912,7 +2923,12 @@ export const PROGRAMS: Program[] = [
           },
           {
             "el": "Music and Worship Arts elective",
-            "cr": 3
+            "cr": 3,
+            "match": {
+              "subjects": [
+                "MUSC"
+              ]
+            }
           },
           {
             "el": "Music and Worship Arts courses (3000-level)",
@@ -2920,11 +2936,21 @@ export const PROGRAMS: Program[] = [
           },
           {
             "el": "Applied Music on your instrument (voice, piano, guitar, bass, drums)",
-            "cr": 12
+            "cr": 12,
+            "match": {
+              "subjects": [
+                "MUSC"
+              ]
+            }
           },
           {
             "el": "Music Ensemble",
-            "cr": 12
+            "cr": 12,
+            "match": {
+              "subjects": [
+                "MUSC"
+              ]
+            }
           }
         ]
       ],
@@ -3008,7 +3034,12 @@ export const PROGRAMS: Program[] = [
           "MUSC 490",
           {
             "el": "Music Technology elective",
-            "cr": 3
+            "cr": 3,
+            "match": {
+              "subjects": [
+                "MUSC"
+              ]
+            }
           },
           {
             "el": "Instrument literature, pedagogy and Music/Worship Arts elective (varies by instrument — piano: MUSC 141+441+442, no separate MWA; voice/guitar/bass/drums: 5 credits of literature+pedagogy plus a 3-credit MWA elective)",
@@ -3016,11 +3047,21 @@ export const PROGRAMS: Program[] = [
           },
           {
             "el": "Applied Music on your instrument",
-            "cr": 16
+            "cr": 16,
+            "match": {
+              "subjects": [
+                "MUSC"
+              ]
+            }
           },
           {
             "el": "Music Ensemble",
-            "cr": 16
+            "cr": 16,
+            "match": {
+              "subjects": [
+                "MUSC"
+              ]
+            }
           }
         ]
       ],
@@ -3110,11 +3151,21 @@ export const PROGRAMS: Program[] = [
           "MUSC 491",
           {
             "el": "Applied Music on your instrument",
-            "cr": 16
+            "cr": 16,
+            "match": {
+              "subjects": [
+                "MUSC"
+              ]
+            }
           },
           {
             "el": "Music Ensemble",
-            "cr": 16
+            "cr": 16,
+            "match": {
+              "subjects": [
+                "MUSC"
+              ]
+            }
           }
         ]
       ],
@@ -3683,7 +3734,8 @@ export const PROGRAMS: Program[] = [
           },
           {
             "el": "Social Sciences electives",
-            "cr": 6
+            "cr": 6,
+            "hint": "PSYC, SOCI, ECON"
           }
         ]
       ],
@@ -3874,7 +3926,8 @@ export const PROGRAMS: Program[] = [
           },
           {
             "el": "Social Sciences electives",
-            "cr": 6
+            "cr": 6,
+            "hint": "PSYC, SOCI, ECON"
           }
         ]
       ],
@@ -3974,7 +4027,8 @@ export const PROGRAMS: Program[] = [
           },
           {
             "el": "Social Sciences electives",
-            "cr": 6
+            "cr": 6,
+            "hint": "PSYC, SOCI, ECON"
           }
         ]
       ],

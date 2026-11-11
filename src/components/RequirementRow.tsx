@@ -2,7 +2,7 @@ import { useState } from "react";
 import type { Row } from "../data/2026-27/types";
 import type { TrackerState } from "../types";
 import { effChoice, rowCodes, rowTarget, type Computed } from "../lib/requirements";
-import { suggestCode } from "../lib/catalog";
+import { elAllows, elMatchLabel, suggestCode } from "../lib/catalog";
 import { CourseLine } from "./CourseLine";
 import { Chip } from "./Chip";
 import { CourseAutocomplete } from "./CourseAutocomplete";
@@ -69,11 +69,12 @@ export function RequirementRow({
   if ("el" in row) {
     const slots = Math.max(1, Math.ceil(row.cr / 3));
     const empty = Math.max(0, slots - chosen.length);
+    const hintText = elMatchLabel(row);
     return (
       <div className="row">
         <div className="row-label">
           {row.el} <span className="count">· {row.cr} cr</span>
-          {row.hint && <span className="faint">· {row.hint}</span>}
+          {hintText && <span className="faint">· {hintText}</span>}
         </div>
         {chosen.map((c) => (
           <CourseLine
@@ -90,6 +91,7 @@ export function RequirementRow({
             placeholder={`Add a course, e.g. ${suggestCode(row.el, row.hint)}`}
             ariaLabel={`Add a course for ${row.el}`}
             onPick={(code) => onChoose(rowKey, code)}
+            allow={(code) => elAllows(row, code)}
           />
         ))}
       </div>
@@ -145,10 +147,12 @@ function SlotInput({
   placeholder,
   ariaLabel,
   onPick,
+  allow,
 }: {
   placeholder: string;
   ariaLabel: string;
   onPick: (code: string) => void;
+  allow?: (code: string) => boolean;
 }) {
   const [value, setValue] = useState("");
   return (
@@ -162,6 +166,7 @@ function SlotInput({
           onPick(code);
           setValue("");
         }}
+        allow={allow}
       />
     </div>
   );

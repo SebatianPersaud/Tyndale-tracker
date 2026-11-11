@@ -49,6 +49,15 @@ export function suggestCode(el: string, hint?: string): string {
 
 type ElMatch = NonNullable<ElRow["match"]>;
 
+// Spelled-out program names that appear in a label instead of the subject code itself, e.g.
+// "Biblical Studies and Theology courses" rather than "BSTH courses".
+const NAME_TO_SUBJECT: Record<string, string> = {
+  "Biblical Studies and Theology": "BSTH",
+  "Business Administration": "BUSI",
+  "Christian Ministries": "CHRI",
+  "Music and Worship Arts": "MUSC",
+};
+
 /**
  * What counts toward an elective slot. `row.match` (set on the handful of rows whose label
  * can't safely be read as a rule — a subject that isn't spelled out, or "subject-or-specific-
@@ -95,6 +104,13 @@ export function elMatch(row: ElRow): ElMatch | null {
   if (m) return { subjects: [m[1]] };
   m = label.match(/^([A-Z]{4})(?:[/]| or )([A-Z]{4}) cours?e?s?$/);
   if (m) return { subjects: [m[1], m[2]] };
+
+  // Spelled-out program name + "courses", optionally with a trailing "(####-level)" qualifier.
+  for (const [name, subject] of Object.entries(NAME_TO_SUBJECT)) {
+    if (label === `${name} courses` || label === `${name} course`) return { subjects: [subject] };
+    const lvlMatch = label.match(new RegExp(`^${name} courses? \\((\\d)000-level\\)$`));
+    if (lvlMatch) return { subjects: [subject], min: Number(lvlMatch[1]) * 100, max: Number(lvlMatch[1]) * 100 + 99 };
+  }
 
   return null;
 }

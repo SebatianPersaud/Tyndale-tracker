@@ -70,6 +70,11 @@ export function RequirementRow({
     const filledCr = chosen.reduce((a, c) => a + cr(c), 0);
     const empty = elSlotsRemaining(row, chosen);
     const hintText = elMatchLabel(row);
+    // A course can land in `chosen` two ways: explicitly added here, or auto-matched because
+    // its status is already marked (even from the Courses tab) and it fits this slot. Only the
+    // explicit ones have anything to "remove" — an auto-matched course's only tie to this row
+    // is its status, so the way to detach it is to change that, not a button with nothing to undo.
+    const explicitSet = new Set(state.choice[rowKey] ?? []);
     return (
       <div className="row">
         <div className="row-label">
@@ -83,7 +88,7 @@ export function RequirementRow({
             code={c}
             status={state.status[c] ?? ""}
             onCycle={onCycle}
-            onRemove={() => onUnchoose(rowKey, c)}
+            onRemove={explicitSet.has(c) ? () => onUnchoose(rowKey, c) : undefined}
           />
         ))}
         {Array.from({ length: empty }).map((_, i) => (

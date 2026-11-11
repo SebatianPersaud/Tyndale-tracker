@@ -3,7 +3,7 @@ import { MINORS } from "../data/2026-27/minors";
 import { CONCENTRATIONS } from "../data/2026-27/concentrations";
 import type { Block, PickRow, PoolRow, ElRow, FreeRow, Row } from "../data/2026-27/types";
 import type { TrackerState } from "../types";
-import { cr, lvl } from "./catalog";
+import { cr, elAllows, elMatch, lvl } from "./catalog";
 
 export const PROG = new Map(PROGRAMS.map((p) => [p.id, p]));
 export const MIN = new Map(MINORS.map((m) => [m.id, m]));
@@ -31,13 +31,34 @@ export function rowCodes(row: Row): string[] {
 }
 
 /**
- * The courses actually counted toward a pick/pool row: whatever the student explicitly
- * chose for this row, plus (for pick/pool rows only) any course they've marked with a
- * status from the row's own option list, auto-filled up to the row's cap.
+ * The courses actually counted toward a row: whatever the student explicitly chose for it,
+ * plus any course they've marked with a status (anywhere — including straight from the
+ * Courses tab) that fits the row's own criteria, auto-filled up to the row's cap. For
+ * pick/pool rows that's the row's fixed option list, capped by count; for an elective row
+ * it's whatever `elAllows` accepts for that slot (e.g. a Fine Arts elective takes any marked
+ * ARTM/MUSC/MEDA course), capped by credit hours since its courses aren't all the same size.
+ *
+ * An elective row only auto-fills when `elMatch` actually knows what it wants. A row left
+ * unrestricted because nothing could say what counts (a generic "reach 60 credit hours"
+ * elective) is one thing; "Transfer courses", "Minor courses", or a diploma-credit row are
+ * unrestricted for a different reason — no ordinary Tyndale course a student marks here is
+ * ever what those represent — so guessing by grabbing whatever's marked would be wrong, not
+ * just imprecise. Both stay explicit-only, same as before this existed.
  */
 export function effChoice(row: Row, key: string, state: TrackerState): string[] {
   const explicit = (state.choice[key] ?? []).slice();
-  if (isEl(row)) return explicit;
+  if (isEl(row)) {
+    let sum = explicit.reduce((a, c) => a + cr(c), 0);
+    if (sum >= row.cr || !elMatch(row)) return explicit;
+    const out = explicit.slice();
+    for (const c of Object.keys(state.status)) {
+      if (sum >= row.cr) break;
+      if (explicit.includes(c) || !elAllows(row, c)) continue;
+      out.push(c);
+      sum += cr(c);
+    }
+    return out;
+  }
   const opts = rowCodes(row);
   const cap = isPick(row) ? row.pick : Infinity;
   for (const o of opts) {

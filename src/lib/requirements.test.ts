@@ -49,11 +49,25 @@ describe("effChoice", () => {
     expect(effChoice(row, "k", state)).toEqual(["ENGL 102"]);
   });
 
-  it("an elective row only returns explicit choices, never auto-fills", () => {
-    const elRow: ElRow = { el: "Elective", cr: 3 };
+  it("an elective row auto-fills from a marked course that fits its own restriction", () => {
+    const elRow: ElRow = { el: "Fine Arts elective", cr: 3, hint: "ARTM, MUSC or MEDA" };
+    const state = blankState();
+    state.status = { "ARTM 101": "d" };
+    expect(effChoice(elRow, "k", state)).toEqual(["ARTM 101"]);
+  });
+
+  it("an elective row does not auto-fill a marked course that doesn't fit", () => {
+    const elRow: ElRow = { el: "Fine Arts elective", cr: 3, hint: "ARTM, MUSC or MEDA" };
     const state = blankState();
     state.status = { "PSYC 360": "d" };
     expect(effChoice(elRow, "k", state)).toEqual([]);
+  });
+
+  it("an elective row stops auto-filling once its credit target is met", () => {
+    const elRow: ElRow = { el: "Fine Arts elective", cr: 3, hint: "ARTM, MUSC or MEDA" };
+    const state = blankState();
+    state.status = { "ARTM 100": "d", "MUSC 101": "d" }; // first one alone already covers 3 cr
+    expect(effChoice(elRow, "k", state)).toEqual(["ARTM 100"]);
   });
 });
 
@@ -124,14 +138,28 @@ describe("compute", () => {
     state.program = "bst"; // its Electives block is a single {free:45} row
     const bst = PROG.get("bst")!;
     const freeBlockIndex = bst.blocks.findIndex(([t]) => t === "Electives");
-    // Mark some course that is not part of any required/pick/pool row in this program as done.
-    state.status = { "MEDA 999": "d" } as Record<string, "d">;
-    // MEDA 999 isn't real, so give it credit via a course that IS in the catalog instead:
-    state.status = { "PSYC 360": "d" };
+    // LING 101 doesn't fit bst's Social/Natural Sciences or Fine Arts electives, or its major —
+    // nothing else in this program would claim it, so it should fall through to free electives.
+    state.status = { "LING 101": "d" };
     const c = compute(state);
     const key = rowKey("bst", freeBlockIndex, 0);
     expect(c.freeFill[key]).toBe(3);
-    expect(c.leftoverAny).toContain("PSYC 360");
+    expect(c.leftoverAny).toContain("LING 101");
+  });
+
+  it("fills a matching named elective row instead of falling through to free electives", () => {
+    const state = blankState();
+    state.program = "bst"; // its Core requirements include a Social Sciences elective (PSYC/SOCI/ECON)
+    const bst = PROG.get("bst")!;
+    const coreBlockIndex = bst.blocks.findIndex(([t]) => t === "Core requirements");
+    const freeBlockIndex = bst.blocks.findIndex(([t]) => t === "Electives");
+    // Marked straight from the Courses tab, never added via the Degree tab's elective slot.
+    state.status = { "PSYC 360": "d" };
+    const c = compute(state);
+    expect(c.leftoverAny).not.toContain("PSYC 360");
+    expect(c.freeFill[rowKey("bst", freeBlockIndex, 0)]).toBe(0);
+    const core = bst.blocks[coreBlockIndex];
+    expect(blockDone({ kind: "Major", key: "bst", title: "", pdf: "", blocks: [], notes: [] }, { t: core[0], cr: core[1], rows: core[2] }, coreBlockIndex, c, state)).toBe(3);
   });
 });
 
